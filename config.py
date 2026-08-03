@@ -21,7 +21,7 @@ WEB_PORT = 80
 # NOTE: kept identical to the original watering project's call. Double-check
 # this against your MicroPython port's machine.WDT signature (some ports use
 # timeout=ms rather than out=ms) before relying on it.
-wdt = machine.WDT(out=10000)
+wdt = machine.WDT(timeout=10000)
 
 # --- WATERING SERVICE HARDWARE ---
 # sb-components relay board, 2 zones, 2 valves per zone
@@ -30,6 +30,6 @@ ZONE_B_PINS = [20, 21]
 
 # --- HOT WATER PUMP SERVICE HARDWARE ---
 PUMP_RELAY_PIN = 22
-PUMP_RELAY_ACTIVE_LOW = True
+PUMP_RELAY_ACTIVE_LOW = False
 PUMP_NUM_SCHEDULES = 16
 PUMP_SCHEDULER_INTERVAL_SECONDS = 10
