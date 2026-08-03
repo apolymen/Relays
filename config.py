@@ -18,9 +18,6 @@ NTP_SERVERS = ["pool.ntp.org", "time.windows.com"]
 WEB_PORT = 80
 
 # --- WATCHDOG ---
-# NOTE: kept identical to the original watering project's call. Double-check
-# this against your MicroPython port's machine.WDT signature (some ports use
-# timeout=ms rather than out=ms) before relying on it.
 wdt = machine.WDT(timeout=10000)
 
 # --- WATERING SERVICE HARDWARE ---
