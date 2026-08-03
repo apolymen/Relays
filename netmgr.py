@@ -40,7 +40,7 @@ def ntp_sync():
                 log("net", "Server {} failed: {}. Trying next fallback...".format(server, inner_error))
                 continue
         last_sync_ok = False
-        raise RuntimeError("All configured NTP servers failed.")
+        return False
     finally:
         socket.setdefaulttimeout(None)
 
