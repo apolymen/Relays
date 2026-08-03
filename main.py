@@ -148,7 +148,8 @@ async def main():
 try:
     asyncio.run(main())
 except KeyboardInterrupt:
-    print("Forced termination. Clearing execution blocks.")
+    print("Stopped by user")
 finally:
     watering_service.force_all_off()
     pump_service.force_all_off()
+    print("All relays turned off")
