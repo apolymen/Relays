@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Έξυπνο πότισμα</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; color: #333; }
+        .container { max-width: 600px; margin: auto; }
+        .header { background: #007bff; color: white; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 0px; }
+        .flex-grid { display: flex; gap: 5px; flex-wrap: wrap; }
+        .zone-card { background: white; padding: 20px; border-radius: 8px; flex: 1; min-width: 250px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .zone-card h2 { margin-top: 0; }
+        input[type=number] { width: 30px; padding: 5px; margin: 5px 0; }
+        .btn { display: inline-block; background: #28a745; color: white; padding: 10px 40px; text-decoration: none; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .manual-btn { background: #dc3545; margin-left: 20px; padding: 10px 20px; }
+        .logs-card { background: #222; color: #00ff00; padding: 15px; border-radius: 8px; margin-top: 20px; font-family: monospace; white-space: pre-wrap; height: 200px; overflow-y: scroll; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Προγραμματισμός</h1>
+            <p>Τοπική ώρα ελεγκτή: <strong>{{TIME}}</strong></p>
+            <p style="margin-top:8px;"><a href="/" style="color:#fff;">Home</a> &nbsp;|&nbsp; <a href="/pump" style="color:#fff;">Pump Service</a> &nbsp;|&nbsp; <a href="/logs" style="color:#fff;">Logs</a></p>
+        </div>
+        <div class="flex-grid">
+            <div class="zone-card">
+                <h2>{{NAME_A}}</h2>
+                <form action="/watering/update" method="POST">
+                    <input type="hidden" name="zone" value="zone_a">
+                    <label>Run Duration (Minutes): <input type="number" name="duration" min="1" max="30" value="{{DUR_A}}"></label><br>
+                    <label>Interval (Every X Days): <input type="number" name="interval" min="1" max="7" value="{{INT_A}}"></label><br>
+                    <h3>Schedule 1</h3>
+                    <label>Time: <input type="number" name="s1_hr" min="0" max="23" value="{{S1H_A}}"> : <input type="number" name="s1_mn" min="0" max="59" value="{{S1M_A}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="s1_en" value="1" {{S1E_A}}> Enabled</label><br>
+                    <h3>Schedule 2</h3>
+                    <label>Time: <input type="number" name="s2_hr" min="0" max="23" value="{{S2H_A}}"> : <input type="number" name="s2_mn" min="0" max="59" value="{{S2M_A}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="s2_en" value="1" {{S2E_A}}> Enabled</label><br><br><br>
+                    <button type="submit" class="btn">Save</button>
+                </form>
+                <form action="/watering/manual" method="POST" style="display:inline">
+                    <input type="hidden" name="zone" value="zone_a">
+                    <button type="submit" class="btn manual-btn">Manual Start</button>
+                </form>
+                <form action="/watering/stop" method="POST" style="display:inline">
+                    <input type="hidden" name="zone" value="zone_a">
+                    <button type="submit" class="btn manual-btn">Stop</button>
+                </form>
+            </div>
+            <div class="zone-card">
+                <h2>{{NAME_B}}</h2>
+                <form action="/watering/update" method="POST">
+                    <input type="hidden" name="zone" value="zone_b">
+                    <label>Run Duration (Minutes): <input type="number" name="duration" min="1" max="30" value="{{DUR_B}}"></label><br>
+                    <label>Interval (Every X Days): <input type="number" name="interval" min="1" max="7" value="{{INT_B}}"></label><br>
+                    <h3>Schedule 1</h3>
+                    <label>Time: <input type="number" name="s1_hr" min="0" max="23" value="{{S1H_B}}"> : <input type="number" name="s1_mn" min="0" max="59" value="{{S1M_B}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="s1_en" value="1" {{S1E_B}}> Enabled</label><br>
+                    <h3>Schedule 2</h3>
+                    <label>Time: <input type="number" name="s2_hr" min="0" max="23" value="{{S2H_B}}"> : <input type="number" name="s2_mn" min="0" max="59" value="{{S2M_B}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="s2_en" value="1" {{S2E_B}}> Enabled</label><br><br><br>
+                    <button type="submit" class="btn">Save</button>
+                </form>
+                <form action="/watering/manual" method="POST" style="display:inline">
+                    <input type="hidden" name="zone" value="zone_b">
+                    <button type="submit" class="btn manual-btn">Manual Start</button>
+                </form>
+                <form action="/watering/stop" method="POST" style="display:inline">
+                    <input type="hidden" name="zone" value="zone_b">
+                    <button type="submit" class="btn manual-btn">Stop</button>
+                </form>
+            </div>
+        </div>
+        <h2>Live System Output History</h2>
+        <div class="logs-card">{{LOGS}}</div>
+    </div>
+</body>
+</html>

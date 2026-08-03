@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pump Timer</title>
+<style>
+  :root {
+    --bg: #14181b;
+    --panel: #1c2226;
+    --panel-raised: #232a2f;
+    --line: #2e373c;
+    --text: #dfe6e9;
+    --muted: #7d8a91;
+    --accent: #2fb8a6;
+    --accent-dim: #1d6f65;
+    --on: #34d399;
+    --off: #4b5563;
+    --danger: #e0664f;
+    --font-display: "Courier New", monospace;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    padding: 0 0 60px 0;
+  }
+
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  header h1 {
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  header h1 span { color: var(--accent); }
+
+  .status-strip {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--off);
+    box-shadow: none;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+
+  .dot.live {
+    background: var(--on);
+    box-shadow: 0 0 8px 1px rgba(52, 211, 153, 0.6);
+  }
+
+  .clock {
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 28px auto 0;
+    padding: 0 20px;
+  }
+
+  .relay-panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .relay-readout {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .relay-lamp {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #3a4147, #1a1f22);
+    border: 2px solid var(--line);
+    position: relative;
+  }
+
+  .relay-lamp::after {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    background: var(--off);
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+
+  .relay-lamp.on::after {
+    background: var(--on);
+    box-shadow: 0 0 14px 3px rgba(52, 211, 153, 0.65);
+  }
+
+  .relay-label {
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 0.06em;
+  }
+
+  .relay-sub {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+
+  .sync-btn {
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  .sync-btn:hover { border-color: var(--accent); }
+
+  .sync-btn:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .schedules-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .schedules-header h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 0;
+    font-weight: 600;
+  }
+
+  .schedule-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .schedule-row {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .schedule-row.enabled { border-color: var(--accent-dim); }
+  .schedule-row.currently-active { border-color: var(--accent); background: var(--panel-raised); }
+
+  .slot-number {
+    font-family: var(--font-display);
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .row-main {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 18px;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .field label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  .field input[type="time"],
+  .field input[type="number"],
+  .field input[type="text"] {
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 6px 8px;
+    border-radius: 5px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    width: 100px;
+  }
+
+  .field input[type="text"] {
+    font-family: var(--font-body);
+    width: 140px;
+  }
+
+  .field input[type="number"] { width: 70px; }
+
+  .days-toggle {
+    display: flex;
+    gap: 4px;
+  }
+
+  .day-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 5px;
+    border: 1px solid var(--line);
+    background: var(--panel-raised);
+    color: var(--muted);
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .day-btn.active {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .row-toggle {
+    display: flex;
+    align-items: center;
+  }
+
+  .switch {
+    position: relative;
+    width: 46px;
+    height: 26px;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    inset: 0;
+    background: var(--off);
+    border-radius: 26px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .slider::before {
+    content: "";
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    top: 3px;
+    background: #e5e7eb;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+
+  .switch input:checked + .slider {
+    background: var(--accent-dim);
+  }
+
+  .switch input:checked + .slider::before {
+    transform: translateX(20px);
+    background: var(--on);
+  }
+
+  .footer-bar {
+    max-width: 900px;
+    margin: 20px auto 0;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .save-btn {
+    background: var(--accent);
+    color: #0d1210;
+    border: none;
+    padding: 12px 22px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+  }
+
+  .save-btn:hover { background: #38c9b6; }
+
+  .save-msg {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .save-msg.error { color: var(--danger); }
+  .save-msg.success { color: var(--on); }
+
+  @media (max-width: 560px) {
+    .schedule-row {
+      grid-template-columns: 24px 1fr;
+      grid-template-rows: auto auto;
+    }
+    .row-toggle {
+      grid-column: 2;
+      justify-content: flex-start;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Pump <span>Timer</span></h1>
+  <div class="status-strip">
+    <a href="/" style="color:var(--muted);text-decoration:none;">Home</a>
+    <a href="/watering" style="color:var(--muted);text-decoration:none;">Watering</a>
+    <a href="/logs" style="color:var(--muted);text-decoration:none;">Logs</a>
+    <div class="status-item"><span class="dot" id="wifi-dot"></span> Wifi</div>
+    <div class="status-item"><span class="dot" id="ntp-dot"></span> Time sync</div>
+    <div class="status-item clock" id="clock">--:--:--</div>
+  </div>
+</header>
+
+<main>
+  <div class="relay-panel">
+    <div class="relay-readout">
+      <div class="relay-lamp" id="relay-lamp"></div>
+      <div>
+        <div class="relay-label" id="relay-label">OFF</div>
+        <div class="relay-sub" id="relay-sub">No active schedule</div>
+      </div>
+    </div>
+    <button class="sync-btn" id="sync-btn">Sync time now</button>
+  </div>
+
+  <div class="schedules-header">
+    <h2>16 Schedules</h2>
+    <span class="save-msg" id="header-hint">Set a start time and duration for each slot you want to use</span>
+  </div>
+
+  <div class="schedule-list" id="schedule-list"></div>
+</main>
+
+<div class="footer-bar">
+  <span class="save-msg" id="save-msg"></span>
+  <button class="save-btn" id="save-btn">Save all schedules</button>
+</div>
+
+<script>
+const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
+let schedules = [];
+let activeIds = [];
+
+function minutesToTimeValue(h, m) {
+  return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+}
+
+function renderSchedules() {
+  const list = document.getElementById("schedule-list");
+  list.innerHTML = "";
+  schedules.forEach((s, i) => {
+    const row = document.createElement("div");
+    row.className = "schedule-row" + (s.enabled ? " enabled" : "") + (activeIds.includes(i) ? " currently-active" : "");
+
+    const timeValue = minutesToTimeValue(s.start_hour, s.start_minute);
+
+    row.innerHTML = `
+      <div class="slot-number">${String(i + 1).padStart(2, "0")}</div>
+      <div class="row-main">
+        <div class="field">
+          <label>Start</label>
+          <input type="time" data-field="start" data-idx="${i}" value="${timeValue}">
+        </div>
+        <div class="field">
+          <label>Duration (min)</label>
+          <input type="number" data-field="duration" data-idx="${i}" min="0" max="1439" value="${s.duration_min}">
+        </div>
+        <div class="field">
+          <label>Label</label>
+          <input type="text" data-field="label" data-idx="${i}" maxlength="40" value="${s.label || ""}" placeholder="optional">
+        </div>
+        <div class="field">
+          <label>Days</label>
+          <div class="days-toggle" data-idx="${i}">
+            ${DAY_LABELS.map((d, di) => `<div class="day-btn${s.days.includes(di) ? " active" : ""}" data-day="${di}">${d}</div>`).join("")}
+          </div>
+        </div>
+      </div>
+      <div class="row-toggle">
+        <label class="switch">
+          <input type="checkbox" data-field="enabled" data-idx="${i}" ${s.enabled ? "checked" : ""}>
+          <span class="slider"></span>
+        </label>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+
+  list.querySelectorAll('input[data-field="start"]').forEach(el => {
+    el.addEventListener("change", e => {
+      const idx = +e.target.dataset.idx;
+      const [h, m] = e.target.value.split(":").map(Number);
+      schedules[idx].start_hour = h;
+      schedules[idx].start_minute = m;
+    });
+  });
+  list.querySelectorAll('input[data-field="duration"]').forEach(el => {
+    el.addEventListener("change", e => {
+      schedules[+e.target.dataset.idx].duration_min = +e.target.value;
+    });
+  });
+  list.querySelectorAll('input[data-field="label"]').forEach(el => {
+    el.addEventListener("change", e => {
+      schedules[+e.target.dataset.idx].label = e.target.value;
+    });
+  });
+  list.querySelectorAll('input[data-field="enabled"]').forEach(el => {
+    el.addEventListener("change", e => {
+      const idx = +e.target.dataset.idx;
+      schedules[idx].enabled = e.target.checked;
+      renderSchedules();
+    });
+  });
+  list.querySelectorAll(".day-btn").forEach(el => {
+    el.addEventListener("click", e => {
+      const idx = +e.target.parentElement.dataset.idx;
+      const day = +e.target.dataset.day;
+      const days = schedules[idx].days;
+      const pos = days.indexOf(day);
+      if (pos >= 0) days.splice(pos, 1);
+      else days.push(day);
+      renderSchedules();
+    });
+  });
+}
+
+async function loadSchedules() {
+  const res = await fetch("/pump/api/schedules");
+  schedules = await res.json();
+  renderSchedules();
+}
+
+async function saveSchedules() {
+  const msg = document.getElementById("save-msg");
+  msg.textContent = "Saving...";
+  msg.className = "save-msg";
+  try {
+    const res = await fetch("/pump/api/schedules", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(schedules)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msg.textContent = "Saved";
+      msg.className = "save-msg success";
+    } else {
+      msg.textContent = "Error: " + data.error;
+      msg.className = "save-msg error";
+    }
+  } catch (e) {
+    msg.textContent = "Could not reach the device";
+    msg.className = "save-msg error";
+  }
+  setTimeout(() => { msg.textContent = ""; }, 4000);
+}
+
+async function pollStatus() {
+  try {
+    const res = await fetch("/pump/api/status");
+    const data = await res.json();
+    document.getElementById("clock").textContent = data.time;
+    document.getElementById("wifi-dot").className = "dot" + (data.wifi_connected ? " live" : "");
+    document.getElementById("ntp-dot").className = "dot" + (data.ntp_synced ? " live" : "");
+
+    const lamp = document.getElementById("relay-lamp");
+    const label = document.getElementById("relay-label");
+    const sub = document.getElementById("relay-sub");
+    lamp.className = "relay-lamp" + (data.relay_on ? " on" : "");
+    label.textContent = data.relay_on ? "ON" : "OFF";
+
+    activeIds = data.active_schedules || [];
+    if (activeIds.length) {
+      const names = activeIds.map(i => "#" + (i + 1));
+      sub.textContent = "Running from schedule " + names.join(", ");
+    } else {
+      sub.textContent = "No active schedule";
+    }
+    document.querySelectorAll(".schedule-row").forEach((row, i) => {
+      row.classList.toggle("currently-active", activeIds.includes(i));
+    });
+  } catch (e) {
+    document.getElementById("wifi-dot").className = "dot";
+  }
+}
+
+document.getElementById("save-btn").addEventListener("click", saveSchedules);
+document.getElementById("sync-btn").addEventListener("click", async () => {
+  const btn = document.getElementById("sync-btn");
+  btn.textContent = "Syncing...";
+  await fetch("/pump/api/sync", { method: "POST" });
+  btn.textContent = "Sync time now";
+  pollStatus();
+});
+
+loadSchedules();
+pollStatus();
+setInterval(pollStatus, 5000);
+</script>
+
+</body>
+</html>
