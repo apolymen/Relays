@@ -31,39 +31,21 @@ def _parse_form_params(text):
     return params
 
 
+def _read_file(path):
+    try:
+        with open(path, "r") as f:
+            return f.read()
+    except Exception as e:
+        return "<html><body><h1>Internal Storage Read Error: " + str(e) + "</h1></body></html>"
+
+
 def _landing_page():
-    return """<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>Home Control</title>
-<style>
-body{font-family:Arial,sans-serif;background:#f0f2f5;color:#333;margin:40px;}
-.container{max-width:500px;margin:auto;text-align:center;}
-a.btn{display:block;background:#007bff;color:white;padding:16px;margin:12px 0;
-border-radius:8px;text-decoration:none;font-size:16px;}
-a.logs{background:#444;}
-</style></head><body>
-<div class="container">
-<h1>Home Control</h1>
-<a class="btn" href="/watering">Watering Service</a>
-<a class="btn" href="/pump">Hot Water Pump Service</a>
-<a class="btn logs" href="/logs">System Logs</a>
-</div></body></html>"""
+    return _read_file("landing.html")
 
 
 def _logs_page():
-    return """<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><title>System Logs</title>
-<style>
-body{font-family:Arial,sans-serif;background:#f0f2f5;color:#333;margin:20px;}
-.container{max-width:700px;margin:auto;}
-a{color:#007bff;}
-.logs-card{background:#222;color:#00ff00;padding:15px;border-radius:8px;
-font-family:monospace;white-space:pre-wrap;}
-</style></head><body>
-<div class="container">
-<p><a href="/">&larr; Home</a></p>
-<h1>Combined System Logs</h1>
-<div class="logs-card">""" + get_logs() + """</div>
-</div></body></html>"""
+    html = _read_file("logs.html")
+    return html.replace("{{LOGS}}", get_logs())
 
 
 async def handle_client(reader, writer):
