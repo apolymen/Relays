@@ -14,12 +14,15 @@ SCHEDULES_FILE = "pump_schedules.json"
 
 relay_pin = machine.Pin(config.PUMP_RELAY_PIN, machine.Pin.OUT)
 
+# Ensure the relay is OFF at boot
+relay_pin.value(1 if config.PUMP_RELAY_ACTIVE_LOW else 0)
+
+relay_state = False
+
 try:
     status_led = machine.Pin("LED", machine.Pin.OUT)
 except (ValueError, TypeError):
     status_led = None
-
-relay_state = False
 
 
 def relay_set(on):
