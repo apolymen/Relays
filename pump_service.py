@@ -245,14 +245,6 @@ async def handle(method, path, body_text, writer):
         await writer.drain()
         return True
 
-    if method == "POST" and path == "/pump/api/sync":
-        import netmgr
-        ok = netmgr.ntp_sync()
-        response = json_response({"ok": ok})
-        writer.write(response.encode())
-        await writer.drain()
-        return True
-
     return False
 
 
