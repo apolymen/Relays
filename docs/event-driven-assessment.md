@@ -22,5 +22,3 @@ Given the device is mains-powered (not battery), the CPU/power savings from avoi
 ### Where it actually would help
 
 If you ever add physical sensors, a soil moisture probe, a flow sensor, a door/motion sensor, that's the case where GPIO interrupts (`machine.Pin.irq(...)`) genuinely beat polling, since you'd otherwise be sampling a pin that changes unpredictably rather than checking a clock that changes predictably. Time-based scheduling and sensor-triggered actions are different problems, and it's fine, even preferable, for them to use different techniques within the same codebase.
-
-If you're weighing this because of something specific you've noticed (log noise, missed triggers, CPU load), let me know what prompted the question and I can look at whether it's actually a symptom of something else.
