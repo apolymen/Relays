@@ -8,6 +8,7 @@ import json
 
 import config
 import athens_time
+import scheduler_core
 from log import log
 
 SCHEDULES_FILE = "pump_schedules.json"
@@ -122,17 +123,13 @@ def local_time_string():
 
 
 def schedule_is_active(sched, now_minutes, weekday):
-    if not sched["enabled"] or sched["duration_min"] <= 0:
+    if not sched["enabled"]:
         return False
-    start = sched["start_hour"] * 60 + sched["start_minute"]
-    end = start + sched["duration_min"]
-    if end <= 1440:
-        return weekday in sched["days"] and start <= now_minutes < end
-    end_wrapped = end - 1440
-    prev_weekday = (weekday - 1) % 7
-    started_today = weekday in sched["days"] and now_minutes >= start
-    continuing_from_yesterday = prev_weekday in sched["days"] and now_minutes < end_wrapped
-    return started_today or continuing_from_yesterday
+    return scheduler_core.weekday_window_active(
+        now_minutes, weekday,
+        sched["start_hour"], sched["start_minute"], sched["duration_min"],
+        sched["days"]
+    )
 
 
 def any_schedule_active():

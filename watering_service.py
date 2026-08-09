@@ -8,6 +8,7 @@ import json
 
 import config
 import athens_time
+import scheduler_core
 from log import log
 
 CONFIG_FILE = "watering_config.json"
@@ -36,8 +37,10 @@ ZONES = {
     }
 }
 
-zone_busy = {"zone_a": False, "zone_b": False}
-zone_tasks = {"zone_a": None, "zone_b": None}
+jobs = {
+    "zone_a": scheduler_core.Job(ZONES["zone_a"]["name"], tag="watering"),
+    "zone_b": scheduler_core.Job(ZONES["zone_b"]["name"], tag="watering"),
+}
 
 
 def get_epoch_days():
@@ -84,9 +87,10 @@ def save_config():
 # --- EXECUTION / SCHEDULING ---
 
 async def execute_watering(zone_id):
-    """Asynchronously drives valves, feeding the watchdog during runtime."""
+    """Asynchronously drives valves, feeding the watchdog during runtime.
+    Busy-tracking and cancellation are handled by the wrapping Job; this
+    function only owns the hardware action and its cleanup guarantee."""
     z = ZONES[zone_id]
-    zone_busy[zone_id] = True
     log("watering", "--- Cycle starting for " + z["name"] + " ---")
     try:
         for i, valve_pin in enumerate(z["valves"]):
@@ -106,14 +110,9 @@ async def execute_watering(zone_id):
             await asyncio.sleep(1); config.wdt.feed()
 
         log("watering", "--- Cycle finished for " + z["name"] + " ---")
-    except asyncio.CancelledError:
-        log("watering", "Cycle for " + z["name"] + " cancelled, closing valves.")
-        raise
     finally:
         for valve_pin in z["valves"]:
             valve_pin.value(0)
-        zone_busy[zone_id] = False
-        zone_tasks[zone_id] = None
 
 
 async def scheduler_task():
@@ -127,22 +126,20 @@ async def scheduler_task():
         for zone_id in ["zone_a", "zone_b"]:
             z = ZONES[zone_id]
 
-            days_since = epoch_day - z["last_watered_day"]
-            if z["last_watered_day"] != 0 and days_since < z["day_interval"]:
+            if not scheduler_core.interval_elapsed(epoch_day, z["last_watered_day"], z["day_interval"]):
                 continue
 
             run_triggered = False
-            if z["sched_1_en"] and hr == z["sched_1_hr"] and mn == z["sched_1_min"]:
+            if z["sched_1_en"] and scheduler_core.exact_minute_due(hr, mn, z["sched_1_hr"], z["sched_1_min"]):
                 run_triggered = True
-            elif z["sched_2_en"] and hr == z["sched_2_hr"] and mn == z["sched_2_min"]:
+            elif z["sched_2_en"] and scheduler_core.exact_minute_due(hr, mn, z["sched_2_hr"], z["sched_2_min"]):
                 run_triggered = True
 
             if run_triggered:
-                if zone_busy.get(zone_id):
-                    log("watering", "Scheduled run skipped, " + z["name"] + " already busy.")
-                else:
-                    z["last_watered_day"] = epoch_day
-                    await execute_watering(zone_id)
+                z["last_watered_day"] = epoch_day
+                task = jobs[zone_id].start(execute_watering(zone_id))
+                if task is not None:
+                    await task  # serialized: only one zone waters at a time
                     for _ in range(60):
                         await asyncio.sleep(1)
                         config.wdt.feed()
@@ -230,11 +227,11 @@ async def handle(method, path, body_text, writer):
         p = _parse_form_params(body_text)
         zk = p.get("zone")
         if zk in ZONES:
-            if zone_busy.get(zk):
+            if jobs[zk].busy:
                 log("watering", "Manual run rejected, " + ZONES[zk]["name"] + " is already running.")
             else:
                 log("watering", "Manual override triggered for " + ZONES[zk]["name"])
-                zone_tasks[zk] = asyncio.create_task(execute_watering(zk))
+                jobs[zk].start(execute_watering(zk))
         writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /watering\r\n\r\n")
         await writer.drain()
         return True
@@ -243,12 +240,7 @@ async def handle(method, path, body_text, writer):
         p = _parse_form_params(body_text)
         zk = p.get("zone")
         if zk in ZONES:
-            task = zone_tasks.get(zk)
-            if task is not None and not task.done():
-                task.cancel()
-                log("watering", "Stop requested for " + ZONES[zk]["name"])
-            else:
-                log("watering", "Stop requested for " + ZONES[zk]["name"] + " but nothing is running.")
+            jobs[zk].stop()
         writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /watering\r\n\r\n")
         await writer.drain()
         return True
