@@ -29,6 +29,7 @@ def ntp_sync():
     socket.setdefaulttimeout(3.0)
     try:
         for server in ntp_servers:
+            config.wdt.feed()
             try:
                 log("net", "Trying NTP sync via {}...".format(server))
                 ntptime.host = server
