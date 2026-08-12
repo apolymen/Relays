@@ -52,8 +52,8 @@ async def connect_and_sync():
     global _last_sync_day
 
     wlan.active(True)
-    log("net", "Configuring Static IP profile...")
-    wlan.ifconfig(config.STATIC_IP_SETTINGS)
+    # log("net", "Configuring Static IP profile...")
+    # wlan.ifconfig(config.STATIC_IP_SETTINGS)
 
     while not wlan.isconnected():
         log("net", "Attempting Wi-Fi Connection...")
