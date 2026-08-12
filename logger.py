@@ -4,7 +4,7 @@
 
 import athens_time
 
-_MAX_LINES = 40
+_MAX_LINES = 100
 system_logs = "--- System Boot Init ---\n"
 
 

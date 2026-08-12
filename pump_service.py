@@ -158,7 +158,7 @@ async def heartbeat_loop():
         return
     while True:
         status_led.toggle()
-        await asyncio.sleep(2)
+        await asyncio.sleep(1)
 
 
 # --- WEB INTERFACE ---
