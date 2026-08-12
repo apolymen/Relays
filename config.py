@@ -9,7 +9,7 @@ WIFI_SSID = "ATHLON"
 WIFI_PASSWORD = "Your_WiFi_Password"
 
 # Format: (Static_IP, Subnet_Mask, Gateway_IP, DNS_Server)
-STATIC_IP_SETTINGS = ("192.168.0.50", "255.255.255.0", "192.168.0.1", "1.1.1.1")
+# STATIC_IP_SETTINGS = ("192.168.0.50", "255.255.255.0", "192.168.0.1", "1.1.1.1")
 
 # --- TIME / NTP ---
 NTP_SERVERS = ["pool.ntp.org", "time.windows.com"]
