@@ -19,7 +19,7 @@ WEB_PORT = 80
 
 # --- WATCHDOG ---
 # RP2's machine.WDT has a hardware ceiling of 8388ms; 8000ms stays safely under it.
-wdt = machine.WDT(timeout=8000)
+# wdt = machine.WDT(timeout=8000)
 
 # --- WATERING SERVICE HARDWARE ---
 # sb-components relay board, 2 zones, 2 valves per zone
