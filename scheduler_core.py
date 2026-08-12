@@ -16,7 +16,7 @@
 # so this module gives both the building blocks instead of a single loop.
 
 import uasyncio as asyncio
-from log import log
+from logger import log
 
 
 # ---------------------------------------------------------------------------

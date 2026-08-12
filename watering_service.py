@@ -9,7 +9,7 @@ import json
 import config
 import athens_time
 import scheduler_core
-from log import log
+from logger import log
 
 CONFIG_FILE = "watering_config.json"
 
@@ -162,7 +162,7 @@ def generate_html_page():
     time_str = "{:02d}:{:02d}".format(t[3], t[4])
 
     html = html.replace("{{TIME}}", time_str)
-    from log import get_logs
+    from logger import get_logs
     html = html.replace("{{LOGS}}", get_logs())
 
     for k in ["zone_a", "zone_b"]:

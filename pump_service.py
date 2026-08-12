@@ -9,7 +9,7 @@ import json
 import config
 import athens_time
 import scheduler_core
-from log import log
+from logger import log
 
 SCHEDULES_FILE = "pump_schedules.json"
 

@@ -14,7 +14,7 @@ import config
 import netmgr
 import watering_service
 import pump_service
-from log import log, get_logs
+from logger import log, get_logs
 
 
 def _parse_form_params(text):

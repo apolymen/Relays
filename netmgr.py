@@ -11,7 +11,7 @@ import uasyncio as asyncio
 
 import config
 import athens_time
-from log import log
+from logger import log
 
 wlan = network.WLAN(network.STA_IF)
 
