@@ -26,7 +26,7 @@ def ntp_sync():
     ntp_servers = config.NTP_SERVERS
 
     # Force a short network timeout to stay safe from the watchdog
-    socket.setdefaulttimeout(3.0)
+    # socket.setdefaulttimeout(3.0)
     try:
         for server in ntp_servers:
             config.wdt.feed()
@@ -42,8 +42,9 @@ def ntp_sync():
                 continue
         last_sync_ok = False
         return False
-    finally:
-        socket.setdefaulttimeout(None)
+    except Exception:
+        print("NTP sync failed")
+    #     socket.setdefaulttimeout(None)
 
 
 async def connect_and_sync():
