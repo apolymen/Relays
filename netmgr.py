@@ -29,7 +29,7 @@ def ntp_sync():
     # socket.setdefaulttimeout(3.0)
     try:
         for server in ntp_servers:
-            config.wdt.feed()
+            # config.wdt.feed()
             try:
                 log("net", "Trying NTP sync via {}...".format(server))
                 ntptime.host = server
@@ -62,13 +62,13 @@ async def connect_and_sync():
             if wlan.isconnected():
                 break
             await asyncio.sleep(1)
-            config.wdt.feed()
+            # config.wdt.feed()
 
         if not wlan.isconnected():
             log("net", "Link down. Retrying router in 30 seconds...")
             for _ in range(30):
                 await asyncio.sleep(1)
-                config.wdt.feed()
+                # config.wdt.feed()
 
     log("net", "Connected successfully! System Address: http://" + str(wlan.ifconfig()[0]))
 
@@ -82,7 +82,7 @@ async def connect_and_sync():
             log("net", "Initial NTP sync failed. Retrying in 10s...")
             for _ in range(10):
                 await asyncio.sleep(1)
-                config.wdt.feed()
+                # config.wdt.feed()
 
 
 async def daily_resync_loop():
@@ -92,7 +92,7 @@ async def daily_resync_loop():
 
     while True:
         await asyncio.sleep(30)
-        config.wdt.feed()
+        # config.wdt.feed()
 
         t = athens_time.localtime()
         current_day = t[2]
