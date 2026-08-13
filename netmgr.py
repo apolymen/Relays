@@ -5,7 +5,7 @@
 
 import network
 import ntptime
-import socket
+# import socket
 import time
 import uasyncio as asyncio
 
@@ -44,7 +44,7 @@ def ntp_sync():
         return False
     except Exception:
         print("NTP sync failed")
-    #     socket.setdefaulttimeout(None)
+    # socket.setdefaulttimeout(None)
 
 
 async def connect_and_sync():
