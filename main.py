@@ -17,6 +17,20 @@ import pump_service
 from logger import log, get_logs
 
 
+try:
+    status_led = machine.Pin("LED", machine.Pin.OUT)
+except (ValueError, TypeError):
+    status_led = None
+
+
+async def heartbeat_loop():
+    if status_led is None:
+        return
+    while True:
+        status_led.toggle()
+        await asyncio.sleep(1)
+
+
 def _parse_form_params(text):
     params = {}
     if not text:
@@ -118,7 +132,7 @@ async def main():
     asyncio.create_task(netmgr.daily_resync_loop())
     asyncio.create_task(watering_service.scheduler_task())
     asyncio.create_task(pump_service.scheduler_loop())
-    asyncio.create_task(pump_service.heartbeat_loop())
+    asyncio.create_task(heartbeat_loop())
 
     log("boot", "Starting shared web server on port " + str(config.WEB_PORT) + "...")
     await asyncio.start_server(handle_client, "0.0.0.0", config.WEB_PORT)

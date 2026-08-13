@@ -20,11 +20,6 @@ relay_pin.value(1 if config.PUMP_RELAY_ACTIVE_LOW else 0)
 
 relay_state = False
 
-try:
-    status_led = machine.Pin("LED", machine.Pin.OUT)
-except (ValueError, TypeError):
-    status_led = None
-
 
 def relay_set(on):
     global relay_state
@@ -161,14 +156,6 @@ async def scheduler_loop():
             relay_set(should_be_on)
             log("pump", "Relay -> " + ("ON" if should_be_on else "OFF") + " at " + local_time_string())
         await asyncio.sleep(config.PUMP_SCHEDULER_INTERVAL_SECONDS)
-
-
-async def heartbeat_loop():
-    if status_led is None:
-        return
-    while True:
-        status_led.toggle()
-        await asyncio.sleep(1)
 
 
 # --- WEB INTERFACE ---
