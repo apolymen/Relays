@@ -120,7 +120,7 @@ async def handle_client(reader, writer):
     except Exception as e:
         print("Web internal routing error:", e)
     finally:
-        await writer.close()
+        writer.close()
         await writer.wait_closed()
 
 
