@@ -125,7 +125,7 @@ async def handle_client(reader, writer):
 
 
 async def main():
-    log("boot", "Booting merged system, initial setup...")
+    log("boot", "Booting system, initial setup...")
 
     watering_service.load_config()
     pump_service.init_schedules()
@@ -137,7 +137,7 @@ async def main():
     asyncio.create_task(pump_service.scheduler_loop())
     asyncio.create_task(heartbeat_loop())
 
-    log("boot", "Starting shared web server on port " + str(config.WEB_PORT) + "...")
+    log("boot", "Starting web server on port " + str(config.WEB_PORT) + "...")
     await asyncio.start_server(handle_client, "0.0.0.0", config.WEB_PORT)
 
     while True:

@@ -217,7 +217,7 @@ async def handle(method, path, body_text, writer):
             ZONES[zk]["sched_2_hr"] = int(p.get("s2_hr", 18))
             ZONES[zk]["sched_2_min"] = int(p.get("s2_mn", 0))
             ZONES[zk]["sched_2_en"] = 1 if "s2_en" in p else 0
-            log("watering", "Updated settings for " + ZONES[zk]["name"])
+            log("watering", "Updated schedules for " + ZONES[zk]["name"])
             save_config()
         writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /watering\r\n\r\n")
         await writer.drain()

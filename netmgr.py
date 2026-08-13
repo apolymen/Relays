@@ -56,7 +56,7 @@ async def connect_and_sync():
     # wlan.ifconfig(config.STATIC_IP_SETTINGS)
 
     while not wlan.isconnected():
-        log("net", "Attempting Wi-Fi Connection...")
+        log("net", "Attempting Wi-Fi connection...")
         wlan.connect(config.WIFI_SSID, config.WIFI_PASSWORD)
         for _ in range(15):
             if wlan.isconnected():
