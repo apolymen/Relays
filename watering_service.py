@@ -100,14 +100,14 @@ async def execute_watering(zone_id):
             rem = z["duration_min"] * 60
             while rem > 0:
                 await asyncio.sleep(1)
-                # config.wdt.feed()
+                config.wdt.feed()
                 rem -= 1
 
             valve_pin.value(0)
             log("watering", "Safely Closed Valve " + str(i + 1))
 
-            await asyncio.sleep(1) #config.wdt.feed()
-            await asyncio.sleep(1) #config.wdt.feed()
+            await asyncio.sleep(1); config.wdt.feed()
+            await asyncio.sleep(1); config.wdt.feed()
 
         log("watering", "--- Cycle finished for " + z["name"] + " ---")
     finally:
@@ -119,7 +119,7 @@ async def scheduler_task():
     """Background task monitoring the current clock time against target thresholds."""
     log("watering", "Scheduler monitoring loop initialised.")
     while True:
-        # config.wdt.feed()
+        config.wdt.feed()
         t = athens_time.localtime()
         hr, mn, epoch_day = t[3], t[4], get_epoch_days()
 
@@ -142,7 +142,7 @@ async def scheduler_task():
                     await task  # serialized: only one zone waters at a time
                     for _ in range(60):
                         await asyncio.sleep(1)
-                        # config.wdt.feed()
+                        config.wdt.feed()
 
         await asyncio.sleep(5)
 

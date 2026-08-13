@@ -145,7 +145,7 @@ def any_schedule_active():
 async def scheduler_loop():
     log("pump", "Scheduler monitoring loop initialised.")
     while True:
-        # config.wdt.feed()
+        config.wdt.feed()
         should_be_on, _ = any_schedule_active()
         if should_be_on != relay_state:
             relay_set(should_be_on)

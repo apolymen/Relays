@@ -19,7 +19,25 @@ WEB_PORT = 80
 
 # --- WATCHDOG ---
 # RP2's machine.WDT has a hardware ceiling of 8388ms; 8000ms stays safely under it.
-# wdt = machine.WDT(timeout=8000)
+#
+# Set WATCHDOG_ENABLED = False while developing in Thonny. Thonny's "Run"
+# workflow interrupts the running script to get a fresh REPL, which stops
+# anything from calling wdt.feed() - but the watchdog itself can't be paused
+# or cancelled once created, so it fires ~8s later and resets the board,
+# right back into the same script, in a loop. Flip this back to True before
+# any real/unattended deployment (plain power-cycle boot, no IDE attached).
+WATCHDOG_ENABLED = False
+
+if WATCHDOG_ENABLED:
+    wdt = machine.WDT(timeout=8000)
+else:
+    class _DummyWDT:
+        """Stand-in with the same .feed() interface as machine.WDT, so every
+        other module can keep calling config.wdt.feed() unconditionally."""
+        def feed(self):
+            pass
+
+    wdt = _DummyWDT()
 
 # --- WATERING SERVICE HARDWARE ---
 # sb-components relay board, 2 zones, 2 valves per zone

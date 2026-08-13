@@ -51,7 +51,7 @@ def _logs_page():
 async def handle_client(reader, writer):
     """Single shared HTTP server. Reads the request once, then dispatches
     to whichever service owns the path (or handles / and /logs directly)."""
-    # config.wdt.feed()
+    config.wdt.feed()
     try:
         request_line = await reader.readline()
         request = request_line.decode("utf-8")
@@ -123,7 +123,7 @@ async def main():
     await asyncio.start_server(handle_client, "0.0.0.0", config.WEB_PORT)
 
     while True:
-        # config.wdt.feed()
+        config.wdt.feed()
         await asyncio.sleep(1)
 
 
