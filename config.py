@@ -26,7 +26,7 @@ WEB_PORT = 80
 # or cancelled once created, so it fires ~8s later and resets the board,
 # right back into the same script, in a loop. Flip this back to True before
 # any real/unattended deployment (plain power-cycle boot, no IDE attached).
-WATCHDOG_ENABLED = False
+WATCHDOG_ENABLED = True
 
 if WATCHDOG_ENABLED:
     wdt = machine.WDT(timeout=8000)
