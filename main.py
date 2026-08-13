@@ -28,8 +28,10 @@ async def heartbeat_loop():
     if status_led is None:
         return
     while True:
-        status_led.toggle()
-        await asyncio.sleep(1)
+        status_led.on()
+        await asyncio.sleep(0.2)
+        status_led.off()
+        await asyncio.sleep(3)
 
 
 def _parse_form_params(text):
@@ -150,4 +152,5 @@ except KeyboardInterrupt:
 finally:
     watering_service.force_all_off()
     pump_service.force_all_off()
+    status_led.off()
     print("All relays turned off")
