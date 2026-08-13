@@ -39,7 +39,7 @@ def default_schedules():
             "enabled": False,
             "start_hour": 6,
             "start_minute": 0,
-            "duration_min": 15,
+            "duration_min": 10,
             "days": [0, 1, 2, 3, 4, 5, 6],
             "label": "",
         }
