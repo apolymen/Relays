@@ -8,6 +8,7 @@
 # +-- Time/NTP Manager    (netmgr.py, daily_resync_loop)
 # +-- Web Server          (this file: single listener, dispatches by path)
 
+import machine
 import uasyncio as asyncio
 
 import config
