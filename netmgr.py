@@ -75,7 +75,7 @@ async def connect_and_sync():
     while True:
         if ntp_sync():
             t = athens_time.localtime()
-            log("net", "NTP Time Synchronised: {:02d}:{:02d}".format(t[3], t[4]))
+            log("net", "NTP Time Synchronised: {:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5]))
             _last_sync_day = t[2]
             return True
         else:
