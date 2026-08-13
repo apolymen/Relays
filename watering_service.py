@@ -159,7 +159,7 @@ def generate_html_page():
         return "<html><body><h1>Internal Storage Read Error: " + str(e) + "</h1></body></html>"
 
     t = athens_time.localtime()
-    time_str = "{:02d}:{:02d}".format(t[3], t[4])
+    time_str = "{:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5])
 
     html = html.replace("{{TIME}}", time_str)
     from logger import get_logs
