@@ -72,7 +72,17 @@ def save_schedules(schedules_data):
         json.dump(schedules_data, f)
 
 
-schedules = load_schedules()
+# Placeholder until init_schedules() is called explicitly from main(), so
+# pump and watering both initialize their schedules at the same visible
+# step during boot, instead of pump loading silently at import time.
+schedules = default_schedules()
+
+
+def init_schedules():
+    """Loads schedules from flash, replacing the placeholder defaults.
+    Called explicitly from main(), mirroring watering_service.load_config()."""
+    global schedules
+    schedules = load_schedules()
 
 
 def validate_schedules(data):
@@ -241,6 +251,14 @@ async def handle(method, path, body_text, writer):
             "wifi_connected": netmgr.wlan.isconnected(),
             "ntp_synced": netmgr.last_sync_ok,
         })
+        writer.write(response.encode())
+        await writer.drain()
+        return True
+
+    if method == "POST" and path == "/pump/api/sync":
+        import netmgr
+        ok = netmgr.ntp_sync()
+        response = json_response({"ok": ok})
         writer.write(response.encode())
         await writer.drain()
         return True

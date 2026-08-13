@@ -111,6 +111,7 @@ async def main():
     log("boot", "Booting merged system, initial setup...")
 
     watering_service.load_config()
+    pump_service.init_schedules()
 
     await netmgr.connect_and_sync()
 
