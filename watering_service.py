@@ -79,7 +79,7 @@ def save_config():
         f = open(CONFIG_FILE, "w")
         f.write(json.dumps(data))
         f.close()
-        log("watering", "Schedules saved to flash.")
+        # log("watering", "Schedules saved to flash.")
     except Exception as e:
         log("watering", "Schedules save failed: " + str(e))
 
