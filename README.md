@@ -35,7 +35,7 @@ one zone at a time to avoid splitting water pressure.
 | `config.py` | Wi-Fi, static IP, NTP, watchdog, and per-service pin settings |
 | `athens_time.py` | DST-aware local time (Europe/Athens), RTC kept in UTC |
 | `netmgr.py` | Wi-Fi connect, NTP sync with fallback, daily resync |
-| `log.py` | Shared rolling log buffer, tagged by service |
+| `logger.py` | Shared rolling log buffer, tagged by service |
 | `scheduler_core.py` | Shared scheduling primitives (see above) |
 | `watering_service.py` | Zone/valve control, schedules, `/watering` routes |
 | `pump_service.py` | Relay control, schedules, `/pump` routes |
