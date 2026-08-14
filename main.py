@@ -150,7 +150,6 @@ try:
 except KeyboardInterrupt:
     print("Stopped by user")
 finally:
-    machine.watchdog_disable()
     watering_service.force_all_off()
     pump_service.force_all_off()
     status_led.off()
