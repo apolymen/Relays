@@ -9,7 +9,7 @@ import athens_time
 _MAX_LINES = 100
 LOG_FILE = "system.log"
 
-system_logs = "--- System Boot Init ---\n"
+system_logs = "--- Log start ---\n"
 
 
 def _load_from_flash():

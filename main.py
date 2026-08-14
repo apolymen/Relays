@@ -125,7 +125,7 @@ async def handle_client(reader, writer):
 
 
 async def main():
-    log("boot", "Booting system, initial setup...")
+    log("boot", "--- System Boot Init ---")
 
     watering_service.load_config()
     pump_service.init_schedules()
