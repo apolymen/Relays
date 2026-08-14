@@ -161,19 +161,19 @@ async def scheduler_loop():
 # --- WEB INTERFACE ---
 
 def json_response(obj, status=200):
-    body = json.dumps(obj)
+    body = json.dumps(obj).encode("utf-8")
     headers = (
         "HTTP/1.1 {} OK\r\n"
         "Content-Type: application/json\r\n"
         "Content-Length: {}\r\n"
         "Connection: close\r\n\r\n"
     ).format(status, len(body))
-    return headers + body
+    return headers.encode("utf-8") + body
 
 
 def file_response(path, content_type):
     try:
-        with open(path) as f:
+        with open(path, "rb") as f:
             body = f.read()
     except OSError:
         return text_response("Not found", 404)
@@ -183,17 +183,18 @@ def file_response(path, content_type):
         "Content-Length: {}\r\n"
         "Connection: close\r\n\r\n"
     ).format(content_type, len(body))
-    return headers + body
+    return headers.encode("utf-8") + body
 
 
 def text_response(msg, status=200):
+    body = msg.encode("utf-8")
     headers = (
         "HTTP/1.1 {} \r\n"
         "Content-Type: text/plain\r\n"
         "Content-Length: {}\r\n"
         "Connection: close\r\n\r\n"
-    ).format(status, len(msg))
-    return headers + msg
+    ).format(status, len(body))
+    return headers.encode("utf-8") + body
 
 
 async def handle(method, path, body_text, writer):
@@ -201,14 +202,14 @@ async def handle(method, path, body_text, writer):
     global schedules
 
     if method == "GET" and (path == "/pump" or path == "/pump/"):
-        response = file_response("pump.html", "text/html")
-        writer.write(response.encode() if isinstance(response, str) else response)
+        response = file_response("pump.html", "text/html; charset=utf-8")
+        writer.write(response)
         await writer.drain()
         return True
 
     if method == "GET" and path == "/pump/api/schedules":
         response = json_response(schedules)
-        writer.write(response.encode())
+        writer.write(response)
         await writer.drain()
         return True
 
@@ -224,7 +225,7 @@ async def handle(method, path, body_text, writer):
             response = json_response({"ok": False, "error": str(e)}, status=400)
         except Exception:
             response = json_response({"ok": False, "error": "invalid request"}, status=400)
-        writer.write(response.encode())
+        writer.write(response)
         await writer.drain()
         return True
 
@@ -238,7 +239,7 @@ async def handle(method, path, body_text, writer):
             "wifi_connected": netmgr.wlan.isconnected(),
             "ntp_synced": netmgr.last_sync_ok,
         })
-        writer.write(response.encode())
+        writer.write(response)
         await writer.drain()
         return True
 
