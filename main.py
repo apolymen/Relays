@@ -1,6 +1,4 @@
 # main.py
-#
-# main.py
 # |
 # +-- Watering Service    (watering_service.py) - 2 zones, 2 valves each
 # +-- Hot Water Pump Service (pump_service.py)   - 1 relay, 16 schedules
