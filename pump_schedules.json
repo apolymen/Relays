@@ -1,0 +1,272 @@
+[
+    {
+        "enabled": true,
+        "start_minute": 50,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4
+        ],
+        "label": "",
+        "id": 0,
+        "start_hour": 6
+    },
+    {
+        "enabled": true,
+        "start_minute": 0,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 1,
+        "start_hour": 8
+    },
+    {
+        "enabled": true,
+        "start_minute": 0,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 2,
+        "start_hour": 14
+    },
+    {
+        "enabled": true,
+        "start_minute": 50,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 3,
+        "start_hour": 15
+    },
+    {
+        "enabled": true,
+        "start_minute": 50,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 4,
+        "start_hour": 17
+    },
+    {
+        "enabled": true,
+        "start_minute": 20,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 5,
+        "start_hour": 19
+    },
+    {
+        "enabled": true,
+        "start_minute": 50,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 6,
+        "start_hour": 20
+    },
+    {
+        "enabled": true,
+        "start_minute": 30,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 7,
+        "start_hour": 23
+    },
+    {
+        "enabled": true,
+        "start_minute": 0,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 8,
+        "start_hour": 22
+    },
+    {
+        "enabled": true,
+        "start_minute": 0,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 9,
+        "start_hour": 9
+    },
+    {
+        "enabled": true,
+        "start_minute": 0,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 10,
+        "start_hour": 10
+    },
+    {
+        "enabled": true,
+        "start_minute": 0,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 11,
+        "start_hour": 11
+    },
+    {
+        "enabled": true,
+        "start_minute": 0,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 12,
+        "start_hour": 12
+    },
+    {
+        "enabled": true,
+        "start_minute": 0,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 13,
+        "start_hour": 13
+    },
+    {
+        "enabled": false,
+        "start_minute": 0,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 14,
+        "start_hour": 6
+    },
+    {
+        "enabled": false,
+        "start_minute": 0,
+        "duration_min": 10,
+        "days": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+        ],
+        "label": "",
+        "id": 15,
+        "start_hour": 6
+    }
+]
