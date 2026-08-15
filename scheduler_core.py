@@ -93,7 +93,7 @@ class Job:
         try:
             await coro
         except asyncio.CancelledError:
-            log(self.tag, "Job for " + self.name + " cancelled.")
+            # log(self.tag, "Job for " + self.name + " cancelled.")
             raise
         finally:
             self._task = None

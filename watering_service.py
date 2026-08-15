@@ -142,7 +142,7 @@ async def execute_valve(zone_id, valve_index):
     z = ZONES[zone_id]
     valve_pin = z["valves"][valve_index]
     label = z["name"] + " Valve " + str(valve_index + 1)
-    log("watering", "--- Manual valve start: " + label + " ---")
+    log("watering", "Manual valve start: " + label)
     try:
         valve_pin.value(1)
         rem = z["duration_min"] * 60
@@ -277,7 +277,7 @@ async def handle(method, path, body_text, writer):
             if zone_busy(zk):
                 log("watering", "Manual valve start rejected, " + ZONES[zk]["name"] + " is already busy.")
             else:
-                log("watering", "Manual valve override triggered for " + ZONES[zk]["name"] + " Valve " + str(idx + 1))
+                # log("watering", "Manual valve override triggered for " + ZONES[zk]["name"] + " Valve " + str(idx + 1))
                 valve_jobs[zk][idx].start(execute_valve(zk, idx))
         writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /watering\r\n\r\n")
         await writer.drain()
