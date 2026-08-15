@@ -150,5 +150,6 @@ except KeyboardInterrupt:
 finally:
     watering_service.force_all_off()
     pump_service.force_all_off()
-    status_led.off()
+    if status_led:
+        status_led.off()
     print("All relays turned off")
