@@ -42,6 +42,26 @@ jobs = {
     "zone_b": scheduler_core.Job(ZONES["zone_b"]["name"], tag="watering"),
 }
 
+# One Job per physical valve, for manual single-valve control.
+valve_jobs = {
+    zone_id: [
+        scheduler_core.Job(ZONES[zone_id]["name"] + " Valve " + str(i + 1), tag="watering")
+        for i in range(len(ZONES[zone_id]["valves"]))
+    ]
+    for zone_id in ZONES
+}
+
+
+def zone_busy(zone_id):
+    """True if the zone's full cycle, or any single valve within it, is
+    currently running. Keeps a zone's valves mutually exclusive of each
+    other no matter which control path (schedule, full-zone manual start,
+    or single-valve manual start) started the job - same one-thing-at-a-
+    time-per-zone principle the full cycle already enforces between zones."""
+    if jobs[zone_id].busy:
+        return True
+    return any(j.busy for j in valve_jobs[zone_id])
+
 
 def get_epoch_days():
     return int(athens_time.epoch_time() // 86400)
@@ -115,6 +135,26 @@ async def execute_watering(zone_id):
             valve_pin.value(0)
 
 
+async def execute_valve(zone_id, valve_index):
+    """Manually drives a single valve for the zone's configured duration.
+    Same auto-off safety and cleanup guarantee as execute_watering, scoped
+    to one valve instead of the full zone sequence."""
+    z = ZONES[zone_id]
+    valve_pin = z["valves"][valve_index]
+    label = z["name"] + " Valve " + str(valve_index + 1)
+    log("watering", "--- Manual valve start: " + label + " ---")
+    try:
+        valve_pin.value(1)
+        rem = z["duration_min"] * 60
+        while rem > 0:
+            await asyncio.sleep(1)
+            config.wdt.feed()
+            rem -= 1
+        log("watering", label + " finished (auto-off after " + str(z["duration_min"]) + " min).")
+    finally:
+        valve_pin.value(0)
+
+
 async def scheduler_task():
     """Background task monitoring the current clock time against target thresholds."""
     log("watering", "Scheduler monitoring loop initialised.")
@@ -136,13 +176,16 @@ async def scheduler_task():
                 run_triggered = True
 
             if run_triggered:
-                z["last_watered_day"] = epoch_day
-                task = jobs[zone_id].start(execute_watering(zone_id))
-                if task is not None:
-                    await task  # serialized: only one zone waters at a time
-                    for _ in range(60):
-                        await asyncio.sleep(1)
-                        config.wdt.feed()
+                if zone_busy(zone_id):
+                    log("watering", "Scheduled run skipped, " + z["name"] + " already busy.")
+                else:
+                    z["last_watered_day"] = epoch_day
+                    task = jobs[zone_id].start(execute_watering(zone_id))
+                    if task is not None:
+                        await task  # serialized: only one zone waters at a time
+                        for _ in range(60):
+                            await asyncio.sleep(1)
+                            config.wdt.feed()
 
         await asyncio.sleep(5)
 
@@ -223,24 +266,32 @@ async def handle(method, path, body_text, writer):
         await writer.drain()
         return True
 
-    if method == "POST" and path == "/watering/manual":
+    if method == "POST" and path == "/watering/valve/start":
         p = _parse_form_params(body_text)
         zk = p.get("zone")
-        if zk in ZONES:
-            if jobs[zk].busy:
-                log("watering", "Manual run rejected, " + ZONES[zk]["name"] + " is already running.")
+        try:
+            idx = int(p.get("valve", 0)) - 1  # UI sends 1-based valve numbers
+        except ValueError:
+            idx = -1
+        if zk in ZONES and 0 <= idx < len(ZONES[zk]["valves"]):
+            if zone_busy(zk):
+                log("watering", "Manual valve start rejected, " + ZONES[zk]["name"] + " is already busy.")
             else:
-                log("watering", "Manual override triggered for " + ZONES[zk]["name"])
-                jobs[zk].start(execute_watering(zk))
+                log("watering", "Manual valve override triggered for " + ZONES[zk]["name"] + " Valve " + str(idx + 1))
+                valve_jobs[zk][idx].start(execute_valve(zk, idx))
         writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /watering\r\n\r\n")
         await writer.drain()
         return True
 
-    if method == "POST" and path == "/watering/stop":
+    if method == "POST" and path == "/watering/valve/stop":
         p = _parse_form_params(body_text)
         zk = p.get("zone")
-        if zk in ZONES:
-            jobs[zk].stop()
+        try:
+            idx = int(p.get("valve", 0)) - 1
+        except ValueError:
+            idx = -1
+        if zk in ZONES and 0 <= idx < len(ZONES[zk]["valves"]):
+            valve_jobs[zk][idx].stop()
         writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /watering\r\n\r\n")
         await writer.drain()
         return True

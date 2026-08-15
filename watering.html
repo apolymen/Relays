@@ -14,6 +14,11 @@
         input[type=number] { width: 30px; padding: 5px; margin: 5px 0; }
         .btn { display: inline-block; background: #28a745; color: white; padding: 10px 40px; text-decoration: none; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
         .manual-btn { background: #dc3545; margin-left: 20px; padding: 10px 20px; }
+        .valve-controls { margin-top: 16px; padding-top: 12px; border-top: 1px solid #eee; }
+        .valve-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+        .valve-row span { min-width: 60px; font-size: 14px; color: #555; }
+        .valve-btn { padding: 6px 16px; font-size: 13px; }
+        .valve-btn.manual-btn { margin-left: 0; }
         .logs-card { background: #222; color: #00ff00; padding: 15px; border-radius: 8px; margin-top: 20px; font-family: monospace; white-space: pre-wrap; height: 200px; overflow-y: scroll; }
     </style>
 </head>
@@ -22,7 +27,7 @@
         <div class="header">
             <h1>Προγραμματισμός</h1>
             <p>Τοπική ώρα ελεγκτή: <strong>{{TIME}}</strong></p>
-            <p style="margin-top:8px;"><a href="/" style="color:#fff;">Home</a> &nbsp;|&nbsp; <a href="/pump" style="color:#fff;">Ανακυκλοφορία</a> &nbsp;|&nbsp; <a href="/logs" style="color:#fff;">Logs</a></p>
+            <p style="margin-top:8px;"><a href="/" style="color:#fff;">Home</a> &nbsp;|&nbsp; <a href="/pump" style="color:#fff;">Pump Service</a> &nbsp;|&nbsp; <a href="/logs" style="color:#fff;">Logs</a></p>
         </div>
         <div class="flex-grid">
             <div class="zone-card">
@@ -37,14 +42,34 @@
                     <label>Time: <input type="number" name="s2_hr" min="0" max="23" value="{{S2H_A}}"> : <input type="number" name="s2_mn" min="0" max="59" value="{{S2M_A}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="s2_en" value="1" {{S2E_A}}> Enabled</label><br><br><br>
                     <button type="submit" class="btn">Save</button>
                 </form>
-                <form action="/watering/manual" method="POST" style="display:inline">
-                    <input type="hidden" name="zone" value="zone_a">
-                    <button type="submit" class="btn manual-btn">Manual Start</button>
-                </form>
-                <form action="/watering/stop" method="POST" style="display:inline">
-                    <input type="hidden" name="zone" value="zone_a">
-                    <button type="submit" class="btn manual-btn">Stop</button>
-                </form>
+                <div class="valve-controls">
+                    <div class="valve-row">
+                        <span>Valve 1:</span>
+                        <form action="/watering/valve/start" method="POST" style="display:inline">
+                            <input type="hidden" name="zone" value="zone_a">
+                            <input type="hidden" name="valve" value="1">
+                            <button type="submit" class="btn valve-btn">Start</button>
+                        </form>
+                        <form action="/watering/valve/stop" method="POST" style="display:inline">
+                            <input type="hidden" name="zone" value="zone_a">
+                            <input type="hidden" name="valve" value="1">
+                            <button type="submit" class="btn manual-btn valve-btn">Stop</button>
+                        </form>
+                    </div>
+                    <div class="valve-row">
+                        <span>Valve 2:</span>
+                        <form action="/watering/valve/start" method="POST" style="display:inline">
+                            <input type="hidden" name="zone" value="zone_a">
+                            <input type="hidden" name="valve" value="2">
+                            <button type="submit" class="btn valve-btn">Start</button>
+                        </form>
+                        <form action="/watering/valve/stop" method="POST" style="display:inline">
+                            <input type="hidden" name="zone" value="zone_a">
+                            <input type="hidden" name="valve" value="2">
+                            <button type="submit" class="btn manual-btn valve-btn">Stop</button>
+                        </form>
+                    </div>
+                </div>
             </div>
             <div class="zone-card">
                 <h2>{{NAME_B}}</h2>
@@ -58,14 +83,34 @@
                     <label>Time: <input type="number" name="s2_hr" min="0" max="23" value="{{S2H_B}}"> : <input type="number" name="s2_mn" min="0" max="59" value="{{S2M_B}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="s2_en" value="1" {{S2E_B}}> Enabled</label><br><br><br>
                     <button type="submit" class="btn">Save</button>
                 </form>
-                <form action="/watering/manual" method="POST" style="display:inline">
-                    <input type="hidden" name="zone" value="zone_b">
-                    <button type="submit" class="btn manual-btn">Manual Start</button>
-                </form>
-                <form action="/watering/stop" method="POST" style="display:inline">
-                    <input type="hidden" name="zone" value="zone_b">
-                    <button type="submit" class="btn manual-btn">Stop</button>
-                </form>
+                <div class="valve-controls">
+                    <div class="valve-row">
+                        <span>Valve 1:</span>
+                        <form action="/watering/valve/start" method="POST" style="display:inline">
+                            <input type="hidden" name="zone" value="zone_b">
+                            <input type="hidden" name="valve" value="1">
+                            <button type="submit" class="btn valve-btn">Start</button>
+                        </form>
+                        <form action="/watering/valve/stop" method="POST" style="display:inline">
+                            <input type="hidden" name="zone" value="zone_b">
+                            <input type="hidden" name="valve" value="1">
+                            <button type="submit" class="btn manual-btn valve-btn">Stop</button>
+                        </form>
+                    </div>
+                    <div class="valve-row">
+                        <span>Valve 2:</span>
+                        <form action="/watering/valve/start" method="POST" style="display:inline">
+                            <input type="hidden" name="zone" value="zone_b">
+                            <input type="hidden" name="valve" value="2">
+                            <button type="submit" class="btn valve-btn">Start</button>
+                        </form>
+                        <form action="/watering/valve/stop" method="POST" style="display:inline">
+                            <input type="hidden" name="zone" value="zone_b">
+                            <input type="hidden" name="valve" value="2">
+                            <button type="submit" class="btn manual-btn valve-btn">Stop</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
