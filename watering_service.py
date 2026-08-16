@@ -11,7 +11,7 @@ import athens_time
 import scheduler_core
 from logger import log
 
-CONFIG_FILE = "watering_config.json"
+CONFIG_FILE = "watering_schedules.json"
 
 # --- HARDWARE SETUP ---
 valves_a = []
