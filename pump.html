@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ανακυκλοφορία</title>
+<title>Pump Timer</title>
 <style>
   :root {
     --bg: #14181b;
@@ -215,7 +215,6 @@
     color: var(--muted);
   }
 
-  .field input[type="time"],
   .field input[type="number"],
   .field input[type="text"] {
     background: var(--panel-raised);
@@ -234,6 +233,22 @@
   }
 
   .field input[type="number"] { width: 70px; }
+
+  .time-select {
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 6px 6px;
+    border-radius: 5px;
+    font-family: var(--font-display);
+    font-size: 13px;
+  }
+
+  .time-sep {
+    color: var(--muted);
+    font-family: var(--font-display);
+    font-size: 13px;
+  }
 
   .days-toggle {
     display: flex;
@@ -359,10 +374,10 @@
 <body>
 
 <header>
-  <h1><span>ΑΝΑΚΥΚΛΟΦΟΡΙΑ</span></h1>
+  <h1>Pump <span>Timer</span></h1>
   <div class="status-strip">
     <a href="/" style="color:var(--muted);text-decoration:none;">Home</a>
-    <a href="/watering" style="color:var(--muted);text-decoration:none;">Πότισμα</a>
+    <a href="/watering" style="color:var(--muted);text-decoration:none;">Watering</a>
     <a href="/logs" style="color:var(--muted);text-decoration:none;">Logs</a>
     <div class="status-item"><span class="dot" id="wifi-dot"></span> Wifi</div>
     <div class="status-item"><span class="dot" id="ntp-dot"></span> Time sync</div>
@@ -399,8 +414,12 @@ const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
 let schedules = [];
 let activeIds = [];
 
-function minutesToTimeValue(h, m) {
-  return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+function timeOptions(count, selected) {
+  let html = "";
+  for (let n = 0; n < count; n++) {
+    html += `<option value="${n}"${n === selected ? " selected" : ""}>${String(n).padStart(2, "0")}</option>`;
+  }
+  return html;
 }
 
 function renderSchedules() {
@@ -410,14 +429,16 @@ function renderSchedules() {
     const row = document.createElement("div");
     row.className = "schedule-row" + (s.enabled ? " enabled" : "") + (activeIds.includes(i) ? " currently-active" : "");
 
-    const timeValue = minutesToTimeValue(s.start_hour, s.start_minute);
-
     row.innerHTML = `
       <div class="slot-number">${String(i + 1).padStart(2, "0")}</div>
       <div class="row-main">
         <div class="field">
           <label>Start</label>
-          <input type="time" data-field="start" data-idx="${i}" value="${timeValue}">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <select class="time-select" data-field="start-hr" data-idx="${i}">${timeOptions(24, s.start_hour)}</select>
+            <span class="time-sep">:</span>
+            <select class="time-select" data-field="start-mn" data-idx="${i}">${timeOptions(60, s.start_minute)}</select>
+          </div>
         </div>
         <div class="field">
           <label>Duration (min)</label>
@@ -444,12 +465,14 @@ function renderSchedules() {
     list.appendChild(row);
   });
 
-  list.querySelectorAll('input[data-field="start"]').forEach(el => {
+  list.querySelectorAll('select[data-field="start-hr"]').forEach(el => {
     el.addEventListener("change", e => {
-      const idx = +e.target.dataset.idx;
-      const [h, m] = e.target.value.split(":").map(Number);
-      schedules[idx].start_hour = h;
-      schedules[idx].start_minute = m;
+      schedules[+e.target.dataset.idx].start_hour = +e.target.value;
+    });
+  });
+  list.querySelectorAll('select[data-field="start-mn"]').forEach(el => {
+    el.addEventListener("change", e => {
+      schedules[+e.target.dataset.idx].start_minute = +e.target.value;
     });
   });
   list.querySelectorAll('input[data-field="duration"]').forEach(el => {

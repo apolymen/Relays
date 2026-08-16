@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Πότισμα</title>
+<title>Watering</title>
 <style>
   :root {
     --bg: #14181b;
@@ -267,8 +267,7 @@
     color: var(--muted);
   }
 
-  .field input[type="number"],
-  .field input[type="time"] {
+  .field input[type="number"] {
     background: var(--panel-raised);
     border: 1px solid var(--line);
     color: var(--text);
@@ -277,6 +276,22 @@
     font-family: var(--font-display);
     font-size: 13px;
     width: 90px;
+  }
+
+  .time-select {
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 6px 6px;
+    border-radius: 5px;
+    font-family: var(--font-display);
+    font-size: 13px;
+  }
+
+  .time-sep {
+    color: var(--muted);
+    font-family: var(--font-display);
+    font-size: 13px;
   }
 
   .schedule-line {
@@ -379,13 +394,13 @@
 <body>
 
 <header>
-  <h1><span>Πότισμα</span></h1>
+  <h1>Water<span>ing</span></h1>
   <div class="status-strip">
     <a href="/" style="color:var(--muted);text-decoration:none;">Home</a>
-    <a href="/pump" style="color:var(--muted);text-decoration:none;">Ανακυκλοφορία</a>
+    <a href="/pump" style="color:var(--muted);text-decoration:none;">Pump</a>
     <a href="/logs" style="color:var(--muted);text-decoration:none;">Logs</a>
     <div class="status-item master-control">
-      <span>Πότισμα</span>
+      <span>Watering</span>
       <label class="switch">
         <input type="checkbox" id="master-switch">
         <span class="slider"></span>
@@ -439,7 +454,9 @@
         </div>
         <div class="schedule-line">
           <span class="schedule-label">Schedule 1</span>
-          <input type="time" data-field="s1-time">
+          <select class="time-select" data-field="s1-hr"></select>
+          <span class="time-sep">:</span>
+          <select class="time-select" data-field="s1-mn"></select>
           <label class="switch">
             <input type="checkbox" data-field="s1-en">
             <span class="slider"></span>
@@ -447,7 +464,9 @@
         </div>
         <div class="schedule-line">
           <span class="schedule-label">Schedule 2</span>
-          <input type="time" data-field="s2-time">
+          <select class="time-select" data-field="s2-hr"></select>
+          <span class="time-sep">:</span>
+          <select class="time-select" data-field="s2-mn"></select>
           <label class="switch">
             <input type="checkbox" data-field="s2-en">
             <span class="slider"></span>
@@ -498,7 +517,9 @@
         </div>
         <div class="schedule-line">
           <span class="schedule-label">Schedule 1</span>
-          <input type="time" data-field="s1-time">
+          <select class="time-select" data-field="s1-hr"></select>
+          <span class="time-sep">:</span>
+          <select class="time-select" data-field="s1-mn"></select>
           <label class="switch">
             <input type="checkbox" data-field="s1-en">
             <span class="slider"></span>
@@ -506,7 +527,9 @@
         </div>
         <div class="schedule-line">
           <span class="schedule-label">Schedule 2</span>
-          <input type="time" data-field="s2-time">
+          <select class="time-select" data-field="s2-hr"></select>
+          <span class="time-sep">:</span>
+          <select class="time-select" data-field="s2-mn"></select>
           <label class="switch">
             <input type="checkbox" data-field="s2-en">
             <span class="slider"></span>
@@ -530,9 +553,23 @@ const masterDays = document.getElementById("master-days");
 const masterOffMsg = document.getElementById("master-off-msg");
 const zonesGrid = document.getElementById("zones-grid");
 
-function toTimeValue(h, m) {
-  return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+function timeOptionsHtml(count) {
+  let html = "";
+  for (let n = 0; n < count; n++) {
+    html += `<option value="${n}">${String(n).padStart(2, "0")}</option>`;
+  }
+  return html;
 }
+
+function populateTimeSelects() {
+  document.querySelectorAll('select[data-field$="-hr"]').forEach(sel => {
+    sel.innerHTML = timeOptionsHtml(24);
+  });
+  document.querySelectorAll('select[data-field$="-mn"]').forEach(sel => {
+    sel.innerHTML = timeOptionsHtml(60);
+  });
+}
+populateTimeSelects();
 
 async function loadConfig() {
   const res = await fetch("/watering/api/config");
@@ -544,9 +581,11 @@ async function loadConfig() {
     card.querySelector('[data-field="name"]').textContent = z.name;
     card.querySelector('[data-field="duration"]').value = z.duration_min;
     card.querySelector('[data-field="interval"]').value = z.day_interval;
-    card.querySelector('[data-field="s1-time"]').value = toTimeValue(z.sched_1_hr, z.sched_1_min);
+    card.querySelector('[data-field="s1-hr"]').value = z.sched_1_hr;
+    card.querySelector('[data-field="s1-mn"]').value = z.sched_1_min;
     card.querySelector('[data-field="s1-en"]').checked = z.sched_1_en;
-    card.querySelector('[data-field="s2-time"]').value = toTimeValue(z.sched_2_hr, z.sched_2_min);
+    card.querySelector('[data-field="s2-hr"]').value = z.sched_2_hr;
+    card.querySelector('[data-field="s2-mn"]').value = z.sched_2_min;
     card.querySelector('[data-field="s2-en"]').checked = z.sched_2_en;
   });
 }
@@ -557,8 +596,10 @@ async function saveZone(card) {
   msg.textContent = "Saving...";
   msg.className = "save-msg";
 
-  const [s1h, s1m] = card.querySelector('[data-field="s1-time"]').value.split(":").map(Number);
-  const [s2h, s2m] = card.querySelector('[data-field="s2-time"]').value.split(":").map(Number);
+  const s1h = +card.querySelector('[data-field="s1-hr"]').value;
+  const s1m = +card.querySelector('[data-field="s1-mn"]').value;
+  const s2h = +card.querySelector('[data-field="s2-hr"]').value;
+  const s2m = +card.querySelector('[data-field="s2-mn"]').value;
 
   const payload = {
     zone: zk,
@@ -655,11 +696,11 @@ async function pollStatus() {
       masterDays.disabled = true;
       if (m.off_days > 0) {
         masterDays.value = m.days_remaining;
-        const dayWord = m.days_remaining === 1 ? "μέρα" : "μέρες";
-        masterOffMsg.innerHTML = '<div class="big">Το πότισμα είναι ΚΛΕΙΣΤΟ</div>Επαναφορά σε ' + m.days_remaining + " " + dayWord;
+        const dayWord = m.days_remaining === 1 ? "day" : "days";
+        masterOffMsg.innerHTML = '<div class="big">Watering is OFF</div>Resumes in ' + m.days_remaining + " " + dayWord;
       } else {
         masterDays.value = 0;
-        masterOffMsg.innerHTML = '<div class="big">Το πότισμα είναι ΚΛΕΙΣΤΟ</div>Κλειστό για πάντα - Άνοιξε τον διακόπτη για επαναφορά';
+        masterOffMsg.innerHTML = '<div class="big">Watering is OFF</div>Off indefinitely - flip the switch to resume';
       }
       masterOffMsg.style.display = "block";
       zonesGrid.style.display = "none";
