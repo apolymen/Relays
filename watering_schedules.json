@@ -1,24 +1,25 @@
 {
-    "zone_b": {
-        "sched_1_hr": 23,
-        "sched_2_hr": 11,
-        "sched_1_en": 1,
-        "sched_1_min": 0,
-        "sched_2_min": 0,
-        "last_watered_day": 0,
-        "sched_2_en": 1,
-        "duration_min": 5,
-        "day_interval": 1
-    },
-    "zone_a": {
-        "sched_1_hr": 6,
-        "sched_2_hr": 20,
-        "sched_1_en": 1,
-        "sched_1_min": 30,
-        "sched_2_min": 30,
-        "last_watered_day": 20679,
-        "sched_2_en": 1,
-        "duration_min": 5,
-        "day_interval": 1
-    }
+  "zone_a": {
+    "sched_1_hr": 6,
+    "sched_2_hr": 20,
+    "sched_1_en": 1,
+    "sched_1_min": 30,
+    "sched_2_min": 30,
+    "last_watered_day": 20679,
+    "sched_2_en": 1,
+    "duration_min": 5,
+    "day_interval": 1
+  },
+  "zone_b": {
+    "sched_1_hr": 23,
+    "sched_2_hr": 11,
+    "sched_1_en": 1,
+    "sched_1_min": 0,
+    "sched_2_min": 0,
+    "last_watered_day": 20681,
+    "sched_2_en": 1,
+    "duration_min": 5,
+    "day_interval": 1
+  },
+  "master": { "off_start_day": 20681, "off_days": 2, "enabled": true }
 }
