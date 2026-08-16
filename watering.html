@@ -1,118 +1,605 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Πότισμα</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background: #f0f2f5; color: #333; }
-        .container { max-width: 600px; margin: auto; }
-        .header { background: #007bff; color: white; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 0px; }
-        .flex-grid { display: flex; gap: 5px; flex-wrap: wrap; }
-        .zone-card { background: white; padding: 20px; border-radius: 8px; flex: 1; min-width: 250px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .zone-card h2 { margin-top: 0; }
-        input[type=number] { width: 30px; padding: 5px; margin: 5px 0; }
-        .btn { display: inline-block; background: #28a745; color: white; padding: 10px 40px; text-decoration: none; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
-        .manual-btn { background: #dc3545; margin-left: 20px; padding: 10px 20px; }
-        .valve-controls { margin-top: 16px; padding-top: 12px; border-top: 1px solid #eee; }
-        .valve-row { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
-        .valve-row span { min-width: 60px; font-size: 14px; color: #555; }
-        .valve-btn { padding: 6px 16px; font-size: 13px; }
-        .valve-btn.manual-btn { margin-left: 0; }
-        .logs-card { background: #222; color: #00ff00; padding: 15px; border-radius: 8px; margin-top: 20px; font-family: monospace; white-space: pre-wrap; height: 200px; overflow-y: scroll; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watering</title>
+<style>
+  :root {
+    --bg: #14181b;
+    --panel: #1c2226;
+    --panel-raised: #232a2f;
+    --line: #2e373c;
+    --text: #dfe6e9;
+    --muted: #7d8a91;
+    --accent: #2fb8a6;
+    --accent-dim: #1d6f65;
+    --on: #34d399;
+    --off: #4b5563;
+    --danger: #e0664f;
+    --font-display: "Courier New", monospace;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    padding: 0 0 60px 0;
+  }
+
+  header {
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  header h1 {
+    font-size: 18px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  header h1 span { color: var(--accent); }
+
+  .status-strip {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--off);
+    box-shadow: none;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+
+  .dot.live {
+    background: var(--on);
+    box-shadow: 0 0 8px 1px rgba(52, 211, 153, 0.6);
+  }
+
+  .clock {
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 28px auto 0;
+    padding: 0 20px;
+  }
+
+  .zones-grid {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .zone-card {
+    flex: 1;
+    min-width: 320px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 22px 24px;
+  }
+
+  .zone-card h2 {
+    font-size: 16px;
+    letter-spacing: 0.05em;
+    margin: 0 0 16px 0;
+    color: var(--text);
+  }
+
+  .valves-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .valve-block {
+    flex: 1;
+    min-width: 130px;
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+    transition: border-color 0.2s;
+  }
+
+  .valve-block.active { border-color: var(--accent); }
+
+  .valve-lamp {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #3a4147, #1a1f22);
+    border: 2px solid var(--line);
+    position: relative;
+  }
+
+  .valve-lamp::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: var(--off);
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+
+  .valve-lamp.on::after {
+    background: var(--on);
+    box-shadow: 0 0 12px 2px rgba(52, 211, 153, 0.65);
+  }
+
+  .valve-name {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+  }
+
+  .valve-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: -4px;
+  }
+
+  .valve-buttons {
+    display: flex;
+    gap: 6px;
+  }
+
+  .mini-btn {
+    border: none;
+    border-radius: 5px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+
+  .mini-btn.start-btn { background: var(--accent); color: #0d1210; }
+  .mini-btn.start-btn:hover:not(:disabled) { background: #38c9b6; }
+
+  .mini-btn.stop-btn { background: var(--danger); color: #fff; }
+  .mini-btn.stop-btn:hover:not(:disabled) { background: #ea8471; }
+
+  .mini-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .settings-block {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+  }
+
+  .field-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .field label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+  }
+
+  .field input[type="number"],
+  .field input[type="time"] {
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 6px 8px;
+    border-radius: 5px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    width: 90px;
+  }
+
+  .schedule-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 10px 0;
+  }
+
+  .schedule-label {
+    min-width: 78px;
+    font-family: var(--font-display);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+  }
+
+  .switch {
+    position: relative;
+    width: 46px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    inset: 0;
+    background: var(--off);
+    border-radius: 26px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .slider::before {
+    content: "";
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    top: 3px;
+    background: #e5e7eb;
+    border-radius: 50%;
+    transition: transform 0.2s;
+  }
+
+  .switch input:checked + .slider {
+    background: var(--accent-dim);
+  }
+
+  .switch input:checked + .slider::before {
+    transform: translateX(20px);
+    background: var(--on);
+  }
+
+  .zone-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .save-btn {
+    background: var(--accent);
+    color: #0d1210;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+  }
+
+  .save-btn:hover { background: #38c9b6; }
+
+  .save-msg {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .save-msg.error { color: var(--danger); }
+  .save-msg.success { color: var(--on); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>Προγραμματισμός</h1>
-            <p>Τοπική ώρα ελεγκτή: <strong>{{TIME}}</strong></p>
-            <p style="margin-top:8px;"><a href="/" style="color:#fff;">Home</a> &nbsp;|&nbsp; <a href="/pump" style="color:#fff;">Pump Service</a> &nbsp;|&nbsp; <a href="/logs" style="color:#fff;">Logs</a></p>
+
+<header>
+  <h1>Water<span>ing</span></h1>
+  <div class="status-strip">
+    <a href="/" style="color:var(--muted);text-decoration:none;">Home</a>
+    <a href="/pump" style="color:var(--muted);text-decoration:none;">Pump</a>
+    <a href="/logs" style="color:var(--muted);text-decoration:none;">Logs</a>
+    <div class="status-item"><span class="dot" id="wifi-dot"></span> Wifi</div>
+    <div class="status-item"><span class="dot" id="ntp-dot"></span> Time sync</div>
+    <div class="status-item clock" id="clock">--:--:--</div>
+  </div>
+</header>
+
+<main>
+  <div class="zones-grid">
+
+    <div class="zone-card" data-zone="zone_a">
+      <h2 data-field="name">Zone A</h2>
+
+      <div class="valves-row">
+        <div class="valve-block" data-zone="zone_a" data-valve="1">
+          <div class="valve-lamp" data-role="lamp"></div>
+          <div class="valve-name">Valve 1</div>
+          <div class="valve-sub" data-role="sub">Idle</div>
+          <div class="valve-buttons">
+            <button class="mini-btn start-btn" data-role="start">Start</button>
+            <button class="mini-btn stop-btn" data-role="stop" disabled>Stop</button>
+          </div>
         </div>
-        <div class="flex-grid">
-            <div class="zone-card">
-                <h2>{{NAME_A}}</h2>
-                <form action="/watering/update" method="POST">
-                    <input type="hidden" name="zone" value="zone_a">
-                    <label>Run Duration (Minutes): <input type="number" name="duration" min="1" max="30" value="{{DUR_A}}"></label><br>
-                    <label>Interval (Every X Days): <input type="number" name="interval" min="1" max="7" value="{{INT_A}}"></label><br>
-                    <h3>Schedule 1</h3>
-                    <label>Time: <input type="number" name="s1_hr" min="0" max="23" value="{{S1H_A}}"> : <input type="number" name="s1_mn" min="0" max="59" value="{{S1M_A}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="s1_en" value="1" {{S1E_A}}> Enabled</label><br>
-                    <h3>Schedule 2</h3>
-                    <label>Time: <input type="number" name="s2_hr" min="0" max="23" value="{{S2H_A}}"> : <input type="number" name="s2_mn" min="0" max="59" value="{{S2M_A}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="s2_en" value="1" {{S2E_A}}> Enabled</label><br><br><br>
-                    <button type="submit" class="btn">Save</button>
-                </form>
-                <div class="valve-controls">
-                    <div class="valve-row">
-                        <span>Valve 1:</span>
-                        <form action="/watering/valve/start" method="POST" style="display:inline">
-                            <input type="hidden" name="zone" value="zone_a">
-                            <input type="hidden" name="valve" value="1">
-                            <button type="submit" class="btn valve-btn">Start</button>
-                        </form>
-                        <form action="/watering/valve/stop" method="POST" style="display:inline">
-                            <input type="hidden" name="zone" value="zone_a">
-                            <input type="hidden" name="valve" value="1">
-                            <button type="submit" class="btn manual-btn valve-btn">Stop</button>
-                        </form>
-                    </div>
-                    <div class="valve-row">
-                        <span>Valve 2:</span>
-                        <form action="/watering/valve/start" method="POST" style="display:inline">
-                            <input type="hidden" name="zone" value="zone_a">
-                            <input type="hidden" name="valve" value="2">
-                            <button type="submit" class="btn valve-btn">Start</button>
-                        </form>
-                        <form action="/watering/valve/stop" method="POST" style="display:inline">
-                            <input type="hidden" name="zone" value="zone_a">
-                            <input type="hidden" name="valve" value="2">
-                            <button type="submit" class="btn manual-btn valve-btn">Stop</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="zone-card">
-                <h2>{{NAME_B}}</h2>
-                <form action="/watering/update" method="POST">
-                    <input type="hidden" name="zone" value="zone_b">
-                    <label>Run Duration (Minutes): <input type="number" name="duration" min="1" max="30" value="{{DUR_B}}"></label><br>
-                    <label>Interval (Every X Days): <input type="number" name="interval" min="1" max="7" value="{{INT_B}}"></label><br>
-                    <h3>Schedule 1</h3>
-                    <label>Time: <input type="number" name="s1_hr" min="0" max="23" value="{{S1H_B}}"> : <input type="number" name="s1_mn" min="0" max="59" value="{{S1M_B}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="s1_en" value="1" {{S1E_B}}> Enabled</label><br>
-                    <h3>Schedule 2</h3>
-                    <label>Time: <input type="number" name="s2_hr" min="0" max="23" value="{{S2H_B}}"> : <input type="number" name="s2_mn" min="0" max="59" value="{{S2M_B}}">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="checkbox" name="s2_en" value="1" {{S2E_B}}> Enabled</label><br><br><br>
-                    <button type="submit" class="btn">Save</button>
-                </form>
-                <div class="valve-controls">
-                    <div class="valve-row">
-                        <span>Valve 1:</span>
-                        <form action="/watering/valve/start" method="POST" style="display:inline">
-                            <input type="hidden" name="zone" value="zone_b">
-                            <input type="hidden" name="valve" value="1">
-                            <button type="submit" class="btn valve-btn">Start</button>
-                        </form>
-                        <form action="/watering/valve/stop" method="POST" style="display:inline">
-                            <input type="hidden" name="zone" value="zone_b">
-                            <input type="hidden" name="valve" value="1">
-                            <button type="submit" class="btn manual-btn valve-btn">Stop</button>
-                        </form>
-                    </div>
-                    <div class="valve-row">
-                        <span>Valve 2:</span>
-                        <form action="/watering/valve/start" method="POST" style="display:inline">
-                            <input type="hidden" name="zone" value="zone_b">
-                            <input type="hidden" name="valve" value="2">
-                            <button type="submit" class="btn valve-btn">Start</button>
-                        </form>
-                        <form action="/watering/valve/stop" method="POST" style="display:inline">
-                            <input type="hidden" name="zone" value="zone_b">
-                            <input type="hidden" name="valve" value="2">
-                            <button type="submit" class="btn manual-btn valve-btn">Stop</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
+        <div class="valve-block" data-zone="zone_a" data-valve="2">
+          <div class="valve-lamp" data-role="lamp"></div>
+          <div class="valve-name">Valve 2</div>
+          <div class="valve-sub" data-role="sub">Idle</div>
+          <div class="valve-buttons">
+            <button class="mini-btn start-btn" data-role="start">Start</button>
+            <button class="mini-btn stop-btn" data-role="stop" disabled>Stop</button>
+          </div>
         </div>
+      </div>
+
+      <div class="settings-block">
+        <div class="field-row">
+          <div class="field">
+            <label>Duration (min)</label>
+            <input type="number" min="1" max="30" data-field="duration">
+          </div>
+          <div class="field">
+            <label>Interval (days)</label>
+            <input type="number" min="1" max="7" data-field="interval">
+          </div>
+        </div>
+        <div class="schedule-line">
+          <span class="schedule-label">Schedule 1</span>
+          <input type="time" data-field="s1-time">
+          <label class="switch">
+            <input type="checkbox" data-field="s1-en">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="schedule-line">
+          <span class="schedule-label">Schedule 2</span>
+          <input type="time" data-field="s2-time">
+          <label class="switch">
+            <input type="checkbox" data-field="s2-en">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="zone-footer">
+        <span class="save-msg" data-role="save-msg"></span>
+        <button class="save-btn" data-role="save-btn">Save</button>
+      </div>
     </div>
+
+    <div class="zone-card" data-zone="zone_b">
+      <h2 data-field="name">Zone B</h2>
+
+      <div class="valves-row">
+        <div class="valve-block" data-zone="zone_b" data-valve="1">
+          <div class="valve-lamp" data-role="lamp"></div>
+          <div class="valve-name">Valve 1</div>
+          <div class="valve-sub" data-role="sub">Idle</div>
+          <div class="valve-buttons">
+            <button class="mini-btn start-btn" data-role="start">Start</button>
+            <button class="mini-btn stop-btn" data-role="stop" disabled>Stop</button>
+          </div>
+        </div>
+        <div class="valve-block" data-zone="zone_b" data-valve="2">
+          <div class="valve-lamp" data-role="lamp"></div>
+          <div class="valve-name">Valve 2</div>
+          <div class="valve-sub" data-role="sub">Idle</div>
+          <div class="valve-buttons">
+            <button class="mini-btn start-btn" data-role="start">Start</button>
+            <button class="mini-btn stop-btn" data-role="stop" disabled>Stop</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-block">
+        <div class="field-row">
+          <div class="field">
+            <label>Duration (min)</label>
+            <input type="number" min="1" max="30" data-field="duration">
+          </div>
+          <div class="field">
+            <label>Interval (days)</label>
+            <input type="number" min="1" max="7" data-field="interval">
+          </div>
+        </div>
+        <div class="schedule-line">
+          <span class="schedule-label">Schedule 1</span>
+          <input type="time" data-field="s1-time">
+          <label class="switch">
+            <input type="checkbox" data-field="s1-en">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="schedule-line">
+          <span class="schedule-label">Schedule 2</span>
+          <input type="time" data-field="s2-time">
+          <label class="switch">
+            <input type="checkbox" data-field="s2-en">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="zone-footer">
+        <span class="save-msg" data-role="save-msg"></span>
+        <button class="save-btn" data-role="save-btn">Save</button>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const zoneCards = document.querySelectorAll(".zone-card");
+
+function toTimeValue(h, m) {
+  return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+}
+
+async function loadConfig() {
+  const res = await fetch("/watering/api/config");
+  const data = await res.json();
+  zoneCards.forEach(card => {
+    const zk = card.dataset.zone;
+    const z = data[zk];
+    if (!z) return;
+    card.querySelector('[data-field="name"]').textContent = z.name;
+    card.querySelector('[data-field="duration"]').value = z.duration_min;
+    card.querySelector('[data-field="interval"]').value = z.day_interval;
+    card.querySelector('[data-field="s1-time"]').value = toTimeValue(z.sched_1_hr, z.sched_1_min);
+    card.querySelector('[data-field="s1-en"]').checked = z.sched_1_en;
+    card.querySelector('[data-field="s2-time"]').value = toTimeValue(z.sched_2_hr, z.sched_2_min);
+    card.querySelector('[data-field="s2-en"]').checked = z.sched_2_en;
+  });
+}
+
+async function saveZone(card) {
+  const zk = card.dataset.zone;
+  const msg = card.querySelector('[data-role="save-msg"]');
+  msg.textContent = "Saving...";
+  msg.className = "save-msg";
+
+  const [s1h, s1m] = card.querySelector('[data-field="s1-time"]').value.split(":").map(Number);
+  const [s2h, s2m] = card.querySelector('[data-field="s2-time"]').value.split(":").map(Number);
+
+  const payload = {
+    zone: zk,
+    duration_min: +card.querySelector('[data-field="duration"]').value,
+    day_interval: +card.querySelector('[data-field="interval"]').value,
+    sched_1_hr: s1h, sched_1_min: s1m,
+    sched_1_en: card.querySelector('[data-field="s1-en"]').checked,
+    sched_2_hr: s2h, sched_2_min: s2m,
+    sched_2_en: card.querySelector('[data-field="s2-en"]').checked,
+  };
+
+  try {
+    const res = await fetch("/watering/api/config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msg.textContent = "Saved";
+      msg.className = "save-msg success";
+    } else {
+      msg.textContent = "Error: " + data.error;
+      msg.className = "save-msg error";
+    }
+  } catch (e) {
+    msg.textContent = "Could not reach the device";
+    msg.className = "save-msg error";
+  }
+  setTimeout(() => { msg.textContent = ""; }, 4000);
+}
+
+async function startValve(zone, valve) {
+  await fetch("/watering/api/valve/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ zone: zone, valve: valve })
+  });
+  pollStatus();
+}
+
+async function stopValve(zone, valve) {
+  await fetch("/watering/api/valve/stop", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ zone: zone, valve: valve })
+  });
+  pollStatus();
+}
+
+zoneCards.forEach(card => {
+  card.querySelector('[data-role="save-btn"]').addEventListener("click", () => saveZone(card));
+  card.querySelectorAll(".valve-block").forEach(vb => {
+    const zone = vb.dataset.zone;
+    const valve = +vb.dataset.valve;
+    vb.querySelector('[data-role="start"]').addEventListener("click", () => startValve(zone, valve));
+    vb.querySelector('[data-role="stop"]').addEventListener("click", () => stopValve(zone, valve));
+  });
+});
+
+async function pollStatus() {
+  try {
+    const res = await fetch("/watering/api/status");
+    const data = await res.json();
+    document.getElementById("clock").textContent = data.time;
+    document.getElementById("wifi-dot").className = "dot" + (data.wifi_connected ? " live" : "");
+    document.getElementById("ntp-dot").className = "dot" + (data.ntp_synced ? " live" : "");
+
+    zoneCards.forEach(card => {
+      const zk = card.dataset.zone;
+      const zstatus = data.zones && data.zones[zk];
+      if (!zstatus) return;
+      const busyArr = zstatus.valve_busy || [];
+      const zoneBusy = busyArr.some(b => b);
+
+      card.querySelectorAll(".valve-block").forEach(vb => {
+        const idx = (+vb.dataset.valve) - 1;
+        const busy = !!busyArr[idx];
+        vb.classList.toggle("active", busy);
+        vb.querySelector('[data-role="lamp"]').className = "valve-lamp" + (busy ? " on" : "");
+        vb.querySelector('[data-role="sub"]').textContent = busy ? "Running" : "Idle";
+        vb.querySelector('[data-role="start"]').disabled = zoneBusy;
+        vb.querySelector('[data-role="stop"]').disabled = !busy;
+      });
+    });
+  } catch (e) {
+    document.getElementById("wifi-dot").className = "dot";
+  }
+}
+
+loadConfig();
+pollStatus();
+setInterval(pollStatus, 5000);
+</script>
+
 </body>
 </html>

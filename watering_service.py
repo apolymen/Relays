@@ -192,107 +192,175 @@ async def scheduler_task():
 
 # --- WEB INTERFACE ---
 
-def generate_html_page():
-    """Reads watering.html and populates it with system tokens."""
+def json_response(obj, status=200):
+    body = json.dumps(obj).encode("utf-8")
+    headers = (
+        "HTTP/1.1 {} OK\r\n"
+        "Content-Type: application/json\r\n"
+        "Content-Length: {}\r\n"
+        "Connection: close\r\n\r\n"
+    ).format(status, len(body))
+    return headers.encode("utf-8") + body
+
+
+def file_response(path, content_type):
     try:
-        f = open("watering.html", "r")
-        html = f.read()
-        f.close()
-    except Exception as e:
-        return "<html><body><h1>Internal Storage Read Error: " + str(e) + "</h1></body></html>"
-
-    t = athens_time.localtime()
-    time_str = "{:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5])
-
-    html = html.replace("{{TIME}}", time_str)
-    from logger import get_logs
-    html = html.replace("{{LOGS}}", get_logs())
-
-    for k in ["zone_a", "zone_b"]:
-        sfx = "_A" if k == "zone_a" else "_B"
-        z = ZONES[k]
-        html = html.replace("{{NAME" + sfx + "}}", z["name"])
-        html = html.replace("{{DUR" + sfx + "}}", str(z["duration_min"]))
-        html = html.replace("{{INT" + sfx + "}}", str(z["day_interval"]))
-        html = html.replace("{{S1H" + sfx + "}}", str(z["sched_1_hr"]))
-        html = html.replace("{{S1M" + sfx + "}}", str(z["sched_1_min"]))
-        html = html.replace("{{S2H" + sfx + "}}", str(z["sched_2_hr"]))
-        html = html.replace("{{S2M" + sfx + "}}", str(z["sched_2_min"]))
-        html = html.replace("{{S1E" + sfx + "}}", "checked" if z["sched_1_en"] else "")
-        html = html.replace("{{S2E" + sfx + "}}", "checked" if z["sched_2_en"] else "")
-
-    return html
+        with open(path, "rb") as f:
+            body = f.read()
+    except OSError:
+        return text_response("Not found", 404)
+    headers = (
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: {}\r\n"
+        "Content-Length: {}\r\n"
+        "Connection: close\r\n\r\n"
+    ).format(content_type, len(body))
+    return headers.encode("utf-8") + body
 
 
-def _parse_form_params(text):
-    params = {}
-    if not text:
-        return params
+def text_response(msg, status=200):
+    body = msg.encode("utf-8")
+    headers = (
+        "HTTP/1.1 {} \r\n"
+        "Content-Type: text/plain\r\n"
+        "Content-Length: {}\r\n"
+        "Connection: close\r\n\r\n"
+    ).format(status, len(body))
+    return headers.encode("utf-8") + body
+
+
+def _zone_config_out(zk):
+    z = ZONES[zk]
+    return {
+        "name": z["name"],
+        "duration_min": z["duration_min"],
+        "day_interval": z["day_interval"],
+        "sched_1_hr": z["sched_1_hr"],
+        "sched_1_min": z["sched_1_min"],
+        "sched_1_en": bool(z["sched_1_en"]),
+        "sched_2_hr": z["sched_2_hr"],
+        "sched_2_min": z["sched_2_min"],
+        "sched_2_en": bool(z["sched_2_en"]),
+        "valve_count": len(z["valves"]),
+    }
+
+
+def _validate_zone_update(data):
+    """Raises ValueError with a readable message if data isn't a usable
+    zone update. Returns a cleaned dict of the fields ZONES[...] expects."""
     try:
-        for pair in text.split("&"):
-            if "=" in pair:
-                parts = pair.split("=")
-                params[parts[0]] = parts[1]
-    except Exception:
-        pass
-    return params
+        duration = int(data.get("duration_min", 10))
+        interval = int(data.get("day_interval", 1))
+        s1_hr = int(data.get("sched_1_hr", 6))
+        s1_min = int(data.get("sched_1_min", 0))
+        s2_hr = int(data.get("sched_2_hr", 18))
+        s2_min = int(data.get("sched_2_min", 0))
+    except (TypeError, ValueError):
+        raise ValueError("all fields must be numeric")
+    if not (1 <= duration <= 30):
+        raise ValueError("duration_min must be 1-30")
+    if not (1 <= interval <= 7):
+        raise ValueError("day_interval must be 1-7")
+    if not (0 <= s1_hr <= 23) or not (0 <= s2_hr <= 23):
+        raise ValueError("hours must be 0-23")
+    if not (0 <= s1_min <= 59) or not (0 <= s2_min <= 59):
+        raise ValueError("minutes must be 0-59")
+    return {
+        "duration_min": duration,
+        "day_interval": interval,
+        "sched_1_hr": s1_hr,
+        "sched_1_min": s1_min,
+        "sched_1_en": 1 if data.get("sched_1_en") else 0,
+        "sched_2_hr": s2_hr,
+        "sched_2_min": s2_min,
+        "sched_2_en": 1 if data.get("sched_2_en") else 0,
+    }
 
 
 async def handle(method, path, body_text, writer):
     """Returns True if this module handled the request (and wrote a response)."""
 
-    if path == "/watering" or path == "/watering/":
-        response = generate_html_page()
-        writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nConnection: close\r\n\r\n")
-        writer.write(response.encode("utf-8"))
+    if method == "GET" and (path == "/watering" or path == "/watering/"):
+        response = file_response("watering.html", "text/html; charset=utf-8")
+        writer.write(response)
         await writer.drain()
         return True
 
-    if method == "POST" and path == "/watering/update":
-        p = _parse_form_params(body_text)
-        zk = p.get("zone")
-        if zk in ZONES:
-            ZONES[zk]["duration_min"] = int(p.get("duration", 10))
-            ZONES[zk]["day_interval"] = int(p.get("interval", 1))
-            ZONES[zk]["sched_1_hr"] = int(p.get("s1_hr", 6))
-            ZONES[zk]["sched_1_min"] = int(p.get("s1_mn", 0))
-            ZONES[zk]["sched_1_en"] = 1 if "s1_en" in p else 0
-            ZONES[zk]["sched_2_hr"] = int(p.get("s2_hr", 18))
-            ZONES[zk]["sched_2_min"] = int(p.get("s2_mn", 0))
-            ZONES[zk]["sched_2_en"] = 1 if "s2_en" in p else 0
-            log("watering", "Updated schedules for " + ZONES[zk]["name"])
-            save_config()
-        writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /watering\r\n\r\n")
+    if method == "GET" and path == "/watering/api/config":
+        data = {zk: _zone_config_out(zk) for zk in ZONES}
+        writer.write(json_response(data))
         await writer.drain()
         return True
 
-    if method == "POST" and path == "/watering/valve/start":
-        p = _parse_form_params(body_text)
-        zk = p.get("zone")
+    if method == "POST" and path == "/watering/api/config":
         try:
-            idx = int(p.get("valve", 0)) - 1  # UI sends 1-based valve numbers
-        except ValueError:
-            idx = -1
+            payload = json.loads(body_text)
+            zk = payload.get("zone")
+            if zk not in ZONES:
+                raise ValueError("unknown zone")
+            cleaned = _validate_zone_update(payload)
+            ZONES[zk].update(cleaned)
+            save_config()
+            log("watering", "Updated schedules for " + ZONES[zk]["name"])
+            response = json_response({"ok": True})
+        except ValueError as e:
+            response = json_response({"ok": False, "error": str(e)}, status=400)
+        except Exception:
+            response = json_response({"ok": False, "error": "invalid request"}, status=400)
+        writer.write(response)
+        await writer.drain()
+        return True
+
+    if method == "GET" and path == "/watering/api/status":
+        import netmgr
+        t = athens_time.localtime()
+        zones_status = {
+            zk: {"valve_busy": [j.busy for j in valve_jobs[zk]]}
+            for zk in ZONES
+        }
+        data = {
+            "time": "{:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5]),
+            "wifi_connected": netmgr.wlan.isconnected(),
+            "ntp_synced": netmgr.last_sync_ok,
+            "zones": zones_status,
+        }
+        writer.write(json_response(data))
+        await writer.drain()
+        return True
+
+    if method == "POST" and path == "/watering/api/valve/start":
+        try:
+            payload = json.loads(body_text)
+            zk = payload.get("zone")
+            idx = int(payload.get("valve", 0)) - 1  # UI sends 1-based valve numbers
+        except Exception:
+            zk, idx = None, -1
         if zk in ZONES and 0 <= idx < len(ZONES[zk]["valves"]):
             if zone_busy(zk):
                 log("watering", "Manual valve start rejected, " + ZONES[zk]["name"] + " is already busy.")
+                response = json_response({"ok": False, "error": ZONES[zk]["name"] + " is already busy"}, status=409)
             else:
-                # log("watering", "Manual valve override triggered for " + ZONES[zk]["name"] + " Valve " + str(idx + 1))
                 valve_jobs[zk][idx].start(execute_valve(zk, idx))
-        writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /watering\r\n\r\n")
+                response = json_response({"ok": True})
+        else:
+            response = json_response({"ok": False, "error": "invalid zone/valve"}, status=400)
+        writer.write(response)
         await writer.drain()
         return True
 
-    if method == "POST" and path == "/watering/valve/stop":
-        p = _parse_form_params(body_text)
-        zk = p.get("zone")
+    if method == "POST" and path == "/watering/api/valve/stop":
         try:
-            idx = int(p.get("valve", 0)) - 1
-        except ValueError:
-            idx = -1
+            payload = json.loads(body_text)
+            zk = payload.get("zone")
+            idx = int(payload.get("valve", 0)) - 1
+        except Exception:
+            zk, idx = None, -1
         if zk in ZONES and 0 <= idx < len(ZONES[zk]["valves"]):
             valve_jobs[zk][idx].stop()
-        writer.write(b"HTTP/1.1 303 See Other\r\nLocation: /watering\r\n\r\n")
+            response = json_response({"ok": True})
+        else:
+            response = json_response({"ok": False, "error": "invalid zone/valve"}, status=400)
+        writer.write(response)
         await writer.drain()
         return True
 
