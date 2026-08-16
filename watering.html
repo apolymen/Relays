@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Watering</title>
+<title>Πότισμα</title>
 <style>
   :root {
     --bg: #14181b;
@@ -394,13 +394,13 @@
 <body>
 
 <header>
-  <h1>Water<span>ing</span></h1>
+  <h1><span>ΠΟΤΙΣΜΑ</span></h1>
   <div class="status-strip">
     <a href="/" style="color:var(--muted);text-decoration:none;">Home</a>
-    <a href="/pump" style="color:var(--muted);text-decoration:none;">Pump</a>
+    <a href="/pump" style="color:var(--muted);text-decoration:none;">Ανακυκλοφορία</a>
     <a href="/logs" style="color:var(--muted);text-decoration:none;">Logs</a>
     <div class="status-item master-control">
-      <span>Watering</span>
+      <span>ΠΟΤΙΣΜΑ</span>
       <label class="switch">
         <input type="checkbox" id="master-switch">
         <span class="slider"></span>
@@ -696,11 +696,11 @@ async function pollStatus() {
       masterDays.disabled = true;
       if (m.off_days > 0) {
         masterDays.value = m.days_remaining;
-        const dayWord = m.days_remaining === 1 ? "day" : "days";
-        masterOffMsg.innerHTML = '<div class="big">Watering is OFF</div>Resumes in ' + m.days_remaining + " " + dayWord;
+        const dayWord = m.days_remaining === 1 ? "μέρα" : "μέρες";
+        masterOffMsg.innerHTML = '<div class="big">Το πότισμα είναι ΚΛΕΙΣΤΟ</div>Επαναφορά σε ' + m.days_remaining + " " + dayWord;
       } else {
         masterDays.value = 0;
-        masterOffMsg.innerHTML = '<div class="big">Watering is OFF</div>Off indefinitely - flip the switch to resume';
+        masterOffMsg.innerHTML = '<div class="big">Το πότισμα είναι ΚΛΕΙΣΤΟ</div>Επ΄αόριστον - Άνοιξε τον διακόπτη για επαναφορά';
       }
       masterOffMsg.style.display = "block";
       zonesGrid.style.display = "none";
