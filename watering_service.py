@@ -51,6 +51,12 @@ valve_jobs = {
     for zone_id in ZONES
 }
 
+# Which valve index a zone's full cycle (jobs[zone_id]) currently has open,
+# or None. Lets the status API reflect scheduled runs the same way it
+# already reflects manual single-valve runs (which are tracked by valve_jobs
+# busy state instead).
+active_valve = {zone_id: None for zone_id in ZONES}
+
 
 def zone_busy(zone_id):
     """True if the zone's full cycle, or any single valve within it, is
@@ -115,6 +121,7 @@ async def execute_watering(zone_id):
     try:
         for i, valve_pin in enumerate(z["valves"]):
             log("watering", "Opening Valve " + str(i + 1) + " of " + z["name"])
+            active_valve[zone_id] = i
             valve_pin.value(1)
 
             rem = z["duration_min"] * 60
@@ -124,6 +131,7 @@ async def execute_watering(zone_id):
                 rem -= 1
 
             valve_pin.value(0)
+            active_valve[zone_id] = None
             log("watering", "Safely Closed Valve " + str(i + 1))
 
             await asyncio.sleep(1); config.wdt.feed()
@@ -133,6 +141,7 @@ async def execute_watering(zone_id):
     finally:
         for valve_pin in z["valves"]:
             valve_pin.value(0)
+        active_valve[zone_id] = None
 
 
 async def execute_valve(zone_id, valve_index):
@@ -314,10 +323,12 @@ async def handle(method, path, body_text, writer):
     if method == "GET" and path == "/watering/api/status":
         import netmgr
         t = athens_time.localtime()
-        zones_status = {
-            zk: {"valve_busy": [j.busy for j in valve_jobs[zk]]}
-            for zk in ZONES
-        }
+        zones_status = {}
+        for zk in ZONES:
+            busy = [j.busy for j in valve_jobs[zk]]
+            if jobs[zk].busy and active_valve[zk] is not None:
+                busy[active_valve[zk]] = True
+            zones_status[zk] = {"valve_busy": busy}
         data = {
             "time": "{:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5]),
             "wifi_connected": netmgr.wlan.isconnected(),
@@ -356,7 +367,13 @@ async def handle(method, path, body_text, writer):
         except Exception:
             zk, idx = None, -1
         if zk in ZONES and 0 <= idx < len(ZONES[zk]["valves"]):
-            valve_jobs[zk][idx].stop()
+            if jobs[zk].busy:
+                # A scheduled/full-zone cycle is running - cancel the whole
+                # thing regardless of which valve happens to be open right
+                # now, rather than just the valve the Stop button belongs to.
+                jobs[zk].stop()
+            else:
+                valve_jobs[zk][idx].stop()
             response = json_response({"ok": True})
         else:
             response = json_response({"ok": False, "error": "invalid zone/valve"}, status=400)
