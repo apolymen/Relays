@@ -129,6 +129,7 @@ async def main():
     pump_service.init_schedules()
 
     await netmgr.connect_and_sync()
+    watering_service.apply_master_boot_offset()
 
     asyncio.create_task(netmgr.daily_resync_loop())
     asyncio.create_task(watering_service.scheduler_task())

@@ -57,6 +57,18 @@ valve_jobs = {
 # busy state instead).
 active_valve = {zone_id: None for zone_id in ZONES}
 
+# Master switch: when disabled, no schedule can trigger and no manual valve
+# start is allowed (server-side, not just hidden in the UI). off_days == 0
+# means "off indefinitely, only a manual ON resumes it"; off_days > 0 means
+# "auto-resume this many days after off_start_day (inclusive of that day)".
+master = {"enabled": True, "off_days": 0, "off_start_day": 0}
+
+# Set by load_config() if the master switch was OFF at boot. The actual
+# day-count restart happens later, in apply_master_boot_offset(), once NTP
+# has made the clock trustworthy - load_config() runs before Wi-Fi/NTP sync,
+# so computing "today" here would use a meaningless default RTC value.
+_master_boot_recalc = False
+
 
 def zone_busy(zone_id):
     """True if the zone's full cycle, or any single valve within it, is
@@ -74,6 +86,7 @@ def get_epoch_days():
 
 
 def load_config():
+    global _master_boot_recalc
     try:
         f = open(CONFIG_FILE, "r")
         data = json.loads(f.read())
@@ -81,9 +94,38 @@ def load_config():
         for k in ["zone_a", "zone_b"]:
             if k in data:
                 ZONES[k].update(data[k])
+        if "master" in data:
+            master.update(data["master"])
         log("watering", "Schedules loaded from flash.")
     except Exception:
         log("watering", "No saved schedules found, using defaults.")
+    if not master["enabled"]:
+        _master_boot_recalc = True
+
+
+def apply_master_boot_offset():
+    """If the master switch was OFF at boot, restart its day-count from
+    today rather than trying to preserve elapsed time across a power loss
+    (today's date isn't known until NTP has synced, hence this runs as a
+    separate step after connect_and_sync(), not inside load_config())."""
+    global _master_boot_recalc
+    if _master_boot_recalc:
+        master["off_start_day"] = get_epoch_days()
+        save_config()
+        log("watering", "Master switch was OFF at boot; day count restarted from today.")
+    _master_boot_recalc = False
+
+
+def _check_master_resume():
+    """Auto-resumes the master switch once its off_days window has elapsed.
+    A off_days of 0 means indefinite - never auto-resumes."""
+    if master["enabled"] or master["off_days"] <= 0:
+        return
+    elapsed = get_epoch_days() - master["off_start_day"]
+    if elapsed >= master["off_days"]:
+        master["enabled"] = True
+        save_config()
+        log("watering", "Master switch auto-resumed after " + str(master["off_days"]) + " day(s).")
 
 
 def save_config():
@@ -102,6 +144,11 @@ def save_config():
                 "sched_2_en": z["sched_2_en"],
                 "last_watered_day": z["last_watered_day"]
             }
+        data["master"] = {
+            "enabled": master["enabled"],
+            "off_days": master["off_days"],
+            "off_start_day": master["off_start_day"],
+        }
         f = open(CONFIG_FILE, "w")
         f.write(json.dumps(data))
         f.close()
@@ -169,6 +216,12 @@ async def scheduler_task():
     log("watering", "Scheduler monitoring loop initialised.")
     while True:
         config.wdt.feed()
+        _check_master_resume()
+
+        if not master["enabled"]:
+            await asyncio.sleep(5)
+            continue
+
         t = athens_time.localtime()
         hr, mn, epoch_day = t[3], t[4], get_epoch_days()
 
@@ -329,13 +382,46 @@ async def handle(method, path, body_text, writer):
             if jobs[zk].busy and active_valve[zk] is not None:
                 busy[active_valve[zk]] = True
             zones_status[zk] = {"valve_busy": busy}
+        master_status = {"enabled": master["enabled"], "off_days": master["off_days"]}
+        if not master["enabled"] and master["off_days"] > 0:
+            elapsed = get_epoch_days() - master["off_start_day"]
+            master_status["days_remaining"] = max(0, master["off_days"] - elapsed)
         data = {
             "time": "{:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5]),
             "wifi_connected": netmgr.wlan.isconnected(),
             "ntp_synced": netmgr.last_sync_ok,
+            "master": master_status,
             "zones": zones_status,
         }
         writer.write(json_response(data))
+        await writer.drain()
+        return True
+
+    if method == "POST" and path == "/watering/api/master":
+        try:
+            payload = json.loads(body_text)
+            enabled = bool(payload.get("enabled", True))
+            if enabled:
+                master["enabled"] = True
+                log("watering", "Master switch turned ON.")
+            else:
+                days = int(payload.get("days", 0))
+                if days < 0:
+                    raise ValueError("days must be 0 or greater")
+                master["enabled"] = False
+                master["off_days"] = days
+                master["off_start_day"] = get_epoch_days()
+                if days > 0:
+                    log("watering", "Master switch turned OFF for " + str(days) + " day(s).")
+                else:
+                    log("watering", "Master switch turned OFF indefinitely.")
+            save_config()
+            response = json_response({"ok": True})
+        except (ValueError, TypeError):
+            response = json_response({"ok": False, "error": "invalid request"}, status=400)
+        except Exception:
+            response = json_response({"ok": False, "error": "invalid request"}, status=400)
+        writer.write(response)
         await writer.drain()
         return True
 
@@ -347,7 +433,9 @@ async def handle(method, path, body_text, writer):
         except Exception:
             zk, idx = None, -1
         if zk in ZONES and 0 <= idx < len(ZONES[zk]["valves"]):
-            if zone_busy(zk):
+            if not master["enabled"]:
+                response = json_response({"ok": False, "error": "Watering is currently OFF"}, status=409)
+            elif zone_busy(zk):
                 log("watering", "Manual valve start rejected, " + ZONES[zk]["name"] + " is already busy.")
                 response = json_response({"ok": False, "error": ZONES[zk]["name"] + " is already busy"}, status=409)
             else:

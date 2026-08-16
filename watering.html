@@ -95,6 +95,46 @@
     padding: 0 20px;
   }
 
+  .master-control {
+    gap: 10px;
+  }
+
+  .master-control span {
+    font-family: var(--font-display);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  #master-days {
+    background: var(--panel-raised);
+    border: 1px solid var(--line);
+    color: var(--text);
+    padding: 5px 6px;
+    border-radius: 5px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    width: 48px;
+  }
+
+  #master-days:disabled {
+    opacity: 0.4;
+  }
+
+  .master-off-msg {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-family: var(--font-display);
+    font-size: 15px;
+  }
+
+  .master-off-msg .big {
+    font-size: 20px;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
   .zones-grid {
     display: flex;
     gap: 20px;
@@ -344,6 +384,14 @@
     <a href="/" style="color:var(--muted);text-decoration:none;">Home</a>
     <a href="/pump" style="color:var(--muted);text-decoration:none;">Pump</a>
     <a href="/logs" style="color:var(--muted);text-decoration:none;">Logs</a>
+    <div class="status-item master-control">
+      <span>Watering</span>
+      <label class="switch">
+        <input type="checkbox" id="master-switch">
+        <span class="slider"></span>
+      </label>
+      <input type="number" id="master-days" min="0" max="365" value="0" title="Days off (0 = indefinite)">
+    </div>
     <div class="status-item"><span class="dot" id="wifi-dot"></span> Wifi</div>
     <div class="status-item"><span class="dot" id="ntp-dot"></span> Time sync</div>
     <div class="status-item clock" id="clock">--:--:--</div>
@@ -351,7 +399,8 @@
 </header>
 
 <main>
-  <div class="zones-grid">
+  <div class="master-off-msg" id="master-off-msg" style="display:none;"></div>
+  <div class="zones-grid" id="zones-grid">
 
     <div class="zone-card" data-zone="zone_a">
       <h2 data-field="name">Zone A</h2>
@@ -476,6 +525,10 @@
 
 <script>
 const zoneCards = document.querySelectorAll(".zone-card");
+const masterSwitch = document.getElementById("master-switch");
+const masterDays = document.getElementById("master-days");
+const masterOffMsg = document.getElementById("master-off-msg");
+const zonesGrid = document.getElementById("zones-grid");
 
 function toTimeValue(h, m) {
   return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
@@ -566,6 +619,22 @@ zoneCards.forEach(card => {
   });
 });
 
+masterSwitch.addEventListener("change", async () => {
+  const enabled = masterSwitch.checked;
+  const payload = { enabled: enabled };
+  if (!enabled) {
+    payload.days = parseInt(masterDays.value, 10) || 0;
+  }
+  try {
+    await fetch("/watering/api/master", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+  } catch (e) { /* status poll will reconcile the switch either way */ }
+  pollStatus();
+});
+
 async function pollStatus() {
   try {
     const res = await fetch("/watering/api/status");
@@ -573,6 +642,28 @@ async function pollStatus() {
     document.getElementById("clock").textContent = data.time;
     document.getElementById("wifi-dot").className = "dot" + (data.wifi_connected ? " live" : "");
     document.getElementById("ntp-dot").className = "dot" + (data.ntp_synced ? " live" : "");
+
+    const m = data.master || { enabled: true, off_days: 0 };
+    masterSwitch.checked = m.enabled;
+
+    if (m.enabled) {
+      masterDays.disabled = false;
+      if (document.activeElement !== masterDays) masterDays.value = 0;
+      masterOffMsg.style.display = "none";
+      zonesGrid.style.display = "flex";
+    } else {
+      masterDays.disabled = true;
+      if (m.off_days > 0) {
+        masterDays.value = m.days_remaining;
+        const dayWord = m.days_remaining === 1 ? "day" : "days";
+        masterOffMsg.innerHTML = '<div class="big">Watering is OFF</div>Resumes in ' + m.days_remaining + " " + dayWord;
+      } else {
+        masterDays.value = 0;
+        masterOffMsg.innerHTML = '<div class="big">Watering is OFF</div>Off indefinitely - flip the switch to resume';
+      }
+      masterOffMsg.style.display = "block";
+      zonesGrid.style.display = "none";
+    }
 
     zoneCards.forEach(card => {
       const zk = card.dataset.zone;
