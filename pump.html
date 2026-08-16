@@ -215,8 +215,7 @@
     color: var(--muted);
   }
 
-  .field input[type="number"],
-  .field input[type="text"] {
+  .field input[type="number"] {
     background: var(--panel-raised);
     border: 1px solid var(--line);
     color: var(--text);
@@ -225,11 +224,6 @@
     font-family: var(--font-display);
     font-size: 13px;
     width: 100px;
-  }
-
-  .field input[type="text"] {
-    font-family: var(--font-body);
-    width: 140px;
   }
 
   .field input[type="number"] { width: 70px; }
@@ -445,10 +439,6 @@ function renderSchedules() {
           <input type="number" data-field="duration" data-idx="${i}" min="0" max="1439" value="${s.duration_min}">
         </div>
         <div class="field">
-          <label>Label</label>
-          <input type="text" data-field="label" data-idx="${i}" maxlength="40" value="${s.label || ""}" placeholder="optional">
-        </div>
-        <div class="field">
           <label>Days</label>
           <div class="days-toggle" data-idx="${i}">
             ${DAY_LABELS.map((d, di) => `<div class="day-btn${s.days.includes(di) ? " active" : ""}" data-day="${di}">${d}</div>`).join("")}
@@ -478,11 +468,6 @@ function renderSchedules() {
   list.querySelectorAll('input[data-field="duration"]').forEach(el => {
     el.addEventListener("change", e => {
       schedules[+e.target.dataset.idx].duration_min = +e.target.value;
-    });
-  });
-  list.querySelectorAll('input[data-field="label"]').forEach(el => {
-    el.addEventListener("change", e => {
-      schedules[+e.target.dataset.idx].label = e.target.value;
     });
   });
   list.querySelectorAll('input[data-field="enabled"]').forEach(el => {

@@ -41,7 +41,6 @@ def default_schedules():
             "start_minute": 0,
             "duration_min": 10,
             "days": [0, 1, 2, 3, 4, 5, 6],
-            "label": "",
         }
         for i in range(config.PUMP_NUM_SCHEDULES)
     ]
@@ -107,7 +106,6 @@ def validate_schedules(data):
             "start_minute": minute,
             "duration_min": duration,
             "days": days,
-            "label": str(s.get("label", ""))[:40],
         })
     return cleaned
 
