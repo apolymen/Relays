@@ -6,6 +6,16 @@
 # +-- Time/NTP Manager    (netmgr.py, daily_resync_loop)
 # +-- Web Server          (this file: single listener, dispatches by path)
 
+# Safety window: machine.WDT() can't be stopped or reconfigured once created,
+# so this delay runs before config (and everything else) gets imported,
+# guaranteeing a few interrupt-able seconds on every boot, even if the
+# watchdog is currently enabled. Press Ctrl-C in Thonny during the countdown
+# to break in before it's created, then edit config.WATCHDOG_ENABLED.
+import time
+for remaining in range(8, 0, -1):
+    print("Starting in", remaining, "- Ctrl-C now for safe mode")
+    time.sleep(1)
+
 import machine
 import uasyncio as asyncio
 
