@@ -44,7 +44,8 @@ foreach ($file in $Files) {
         exit 1
     }
 
-    $bytes = [System.IO.File]::ReadAllBytes($path)
+    $fullpath = (Get-Item $path).FullName
+    $bytes = [System.IO.File]::ReadAllBytes($fullpath)
 
     try {
         Invoke-RestMethod -Uri "$BaseUrl/deploy/stage?filename=$file" -Method Post `
