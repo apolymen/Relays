@@ -23,6 +23,7 @@ import config
 import netmgr
 import watering_service
 import pump_service
+import deploy_service
 from logger import log, get_logs
 
 
@@ -82,12 +83,15 @@ async def handle_client(reader, writer):
         request = request_line.decode("utf-8")
 
         content_length = 0
+        deploy_token = None
         while True:
             line = await reader.readline()
             if line == b"\r\n" or line == b"":
                 break
             if line.lower().startswith(b"content-length:"):
                 content_length = int(line.split(b":", 1)[1].strip())
+            elif line.lower().startswith(b"x-deploy-token:"):
+                deploy_token = line.split(b":", 1)[1].strip().decode("utf-8")
 
         body = b""
         if content_length:
@@ -119,6 +123,11 @@ async def handle_client(reader, writer):
 
         if path.startswith("/pump"):
             handled = await pump_service.handle(method, path, body_text, writer)
+            if handled:
+                return
+
+        if path.startswith("/deploy"):
+            handled = await deploy_service.handle(method, path, deploy_token, body_text, writer)
             if handled:
                 return
 

@@ -9,7 +9,7 @@ WIFI_SSID = "Your SSID"
 WIFI_PASSWORD = "Your WiFi Password"
 
 # Format: (Static_IP, Subnet_Mask, Gateway_IP, DNS_Server)
-# STATIC_IP_SETTINGS = ("192.168.0.50", "255.255.255.0", "192.168.0.1", "1.1.1.1")
+STATIC_IP_SETTINGS = ("192.168.0.50", "255.255.255.0", "192.168.0.1", "1.1.1.1")
 
 # --- TIME / NTP ---
 NTP_SERVERS = ["pool.ntp.org", "time.windows.com"]
@@ -48,4 +48,10 @@ ZONE_B_PINS = [20, 21]
 PUMP_RELAY_PIN = 22
 PUMP_RELAY_ACTIVE_LOW = False
 PUMP_NUM_SCHEDULES = 16
-PUMP_SCHEDULER_INTERVAL_SECONDS = 5
+PUMP_SCHEDULER_INTERVAL_SECONDS = 10
+
+# --- REMOTE DEPLOY ---
+# Shared secret required on every /deploy/* request, checked in addition to
+# (not instead of) Tailscale's own network-level authentication. Change this
+# to something private before using deploy_service.py.
+DEPLOY_TOKEN = "change-this-to-your-own-secret"
