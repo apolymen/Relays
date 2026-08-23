@@ -13,17 +13,17 @@
 # Usage:
 #   .\deploy.ps1
 #   .\deploy.ps1 -PicoHost "192.168.0.50" -ProjectDir "C:\path\to\project"
+#   .\deploy.ps1 -Files "watering_service.py","watering.html"
 
 param(
     [string]$PicoHost = "192.168.0.50",
-    [string]$ProjectDir = "."
-)
-
-$Files = @(
-    "main.py", "config.py", "logger.py", "netmgr.py", "athens_time.py",
-    "scheduler_core.py", "watering_service.py", "pump_service.py",
-    "deploy_service.py",
-    "watering.html", "pump.html", "landing.html", "logs.html"
+    [string]$ProjectDir = ".",
+    [string[]]$Files = @(
+        "main.py", "config.py", "logger.py", "netmgr.py", "athens_time.py",
+        "scheduler_core.py", "watering_service.py", "pump_service.py",
+        "deploy_service.py",
+        "watering.html", "pump.html", "landing.html", "logs.html"
+    )
 )
 
 $Token = $env:PICO_DEPLOY_TOKEN
