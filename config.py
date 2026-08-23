@@ -55,3 +55,9 @@ PUMP_SCHEDULER_INTERVAL_SECONDS = 10
 # (not instead of) Tailscale's own network-level authentication. Change this
 # to something private before using deploy_service.py.
 DEPLOY_TOKEN = "change-this-to-your-own-secret"
+
+# --- BOOT NOTIFICATION ---
+# ntfy.sh topic to post "Device booted at HH:MM:SS" to. Topic names aren't
+# secret in the strict sense (anyone who knows it can publish/subscribe),
+# so pick something not easily guessable. Leave blank to disable.
+NTFY_TOPIC = ""

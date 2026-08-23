@@ -24,6 +24,8 @@ import netmgr
 import watering_service
 import pump_service
 import deploy_service
+import notify
+import athens_time
 from logger import log, get_logs
 
 
@@ -149,6 +151,10 @@ async def main():
 
     await netmgr.connect_and_sync()
     watering_service.apply_master_boot_offset()
+
+    t = athens_time.localtime()
+    time_str = "{:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5])
+    asyncio.create_task(notify.send_boot_notification(time_str))
 
     asyncio.create_task(netmgr.daily_resync_loop())
     asyncio.create_task(watering_service.scheduler_task())

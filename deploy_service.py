@@ -18,6 +18,7 @@ import uasyncio as asyncio
 import config
 import watering_service
 import pump_service
+import notify
 from logger import log
 
 STAGING_DIR = "staging"
@@ -147,6 +148,7 @@ async def handle(method, path, token, body_text, writer):
             response = json_response({"ok": True, "committed": staged, "rebooting": True})
             writer.write(response)
             await writer.drain()
+            notify.mark_deploy_reboot()
             await asyncio.sleep(3)  # give the response time to actually leave before reset
             machine.reset()
         except Exception as e:
