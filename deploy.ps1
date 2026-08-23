@@ -5,8 +5,10 @@
 # reservation), since the deploy target below is a plain LAN IP, not a
 # Tailscale MagicDNS name.
 #
-# Setup (once per PowerShell session, or persist via SetEnvironmentVariable):
+# Setup (once per PowerShell session):
 #   $env:PICO_DEPLOY_TOKEN = "your-secret-here"
+# or persist via SetEnvironmentVariable:
+# [System.Environment]::SetEnvironmentVariable("PICO_DEPLOY_TOKEN", "your-secret", "User")
 #
 # Usage:
 #   .\deploy.ps1
