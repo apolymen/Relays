@@ -7,6 +7,7 @@ import network
 import ntptime
 # import socket
 import time
+import gc
 import uasyncio as asyncio
 
 import config
@@ -99,6 +100,7 @@ async def daily_resync_loop():
         now_ticks = time.ticks_ms()
 
         if current_day != _last_sync_day:
+            log("net", "Free memory: " + str(gc.mem_free()) + " bytes.")
             if time.ticks_diff(now_ticks, _next_retry_ticks) >= 0:
                 if ntp_sync():
                     _last_sync_day = athens_time.localtime()[2]
