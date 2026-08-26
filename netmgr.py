@@ -100,6 +100,7 @@ async def daily_resync_loop():
         now_ticks = time.ticks_ms()
 
         if current_day != _last_sync_day:
+            gc.collect()
             log("net", "Free memory: " + str(gc.mem_free()) + " bytes.")
             if time.ticks_diff(now_ticks, _next_retry_ticks) >= 0:
                 if ntp_sync():
