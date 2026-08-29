@@ -125,6 +125,11 @@ def local_time_string():
     return "{:02d}:{:02d}:{:02d}".format(h, m, s)
 
 
+def local_date_string():
+    t = athens_time.localtime()
+    return "{:04d}-{:02d}-{:02d}".format(t[0], t[1], t[2])
+
+
 def schedule_is_active(sched, now_minutes, weekday):
     if not sched["enabled"]:
         return False
@@ -232,6 +237,7 @@ async def handle(method, path, body_text, writer):
         active, active_ids = any_schedule_active()
         response = json_response({
             "time": local_time_string(),
+            "date": local_date_string(),
             "relay_on": relay_state,
             "active_schedules": active_ids,
             "wifi_connected": netmgr.wlan.isconnected(),

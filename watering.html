@@ -680,7 +680,7 @@ async function pollStatus() {
   try {
     const res = await fetch("/watering/api/status");
     const data = await res.json();
-    document.getElementById("clock").textContent = data.time;
+    document.getElementById("clock").textContent = data.date + " " + data.time;
     document.getElementById("wifi-dot").className = "dot" + (data.wifi_connected ? " live" : "");
     document.getElementById("ntp-dot").className = "dot" + (data.ntp_synced ? " live" : "");
 

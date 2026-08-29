@@ -388,6 +388,7 @@ async def handle(method, path, body_text, writer):
             master_status["days_remaining"] = max(0, master["off_days"] - elapsed)
         data = {
             "time": "{:02d}:{:02d}:{:02d}".format(t[3], t[4], t[5]),
+            "date": "{:04d}-{:02d}-{:02d}".format(t[0], t[1], t[2]),
             "wifi_connected": netmgr.wlan.isconnected(),
             "ntp_synced": netmgr.last_sync_ok,
             "master": master_status,

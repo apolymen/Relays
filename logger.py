@@ -6,7 +6,7 @@
 
 import athens_time
 
-_MAX_LINES = 100
+_MAX_LINES = 200
 LOG_FILE = "system.log"
 
 system_logs = "--- Log start ---\n"
@@ -46,7 +46,7 @@ def log(tag, text):
     global system_logs
     try:
         t = athens_time.localtime()
-        stamp = "[{:02d}:{:02d}:{:02d}] [{}] ".format(t[3], t[4], t[5], tag)
+        stamp = "[{:04d}-{:02d}-{:02d} {:02d}:{:02d}:{:02d}] [{}] ".format(t[0], t[1], t[2], t[3], t[4], t[5], tag)
     except Exception:
         stamp = "[00:00:00] [{}] ".format(tag)
 
