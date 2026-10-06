@@ -47,6 +47,7 @@ state) - there's no server-side HTML templating left in either service.
 | `watering_service.py` | Zone/valve control, master switch, schedules, `/watering` routes |
 | `pump_service.py` | Relay control, schedules, `/pump` routes |
 | `deploy_service.py` | Remote code updates: stage files, then atomically commit + reboot, `/deploy` routes |
+| `notify.py` | Push notifications for reboots |
 | `landing.html` | Home page linking to both dashboards and logs |
 | `watering.html` | Watering dashboard (live valve status, per-valve start/stop, master switch) |
 | `pump.html` | Pump dashboard (live relay status, 16 schedules) |
@@ -107,8 +108,8 @@ HTTP) or physical access if it doesn't.
 
 ## Hardware notes
 
-- Relay boards are active-HIGH with a pull-down on the signal line, so relays
+- Relay modules should be active-HIGH with a pull-down on the signal line, so relays
   stay de-energized during boot before MicroPython runs.
-- Use optocoupler relay modules rated for 3V/3.3V logic; generic 5V boards can
-  be unreliable on the Pico's GPIO.
+- Use relay modules with optocouplers for galvanic isolation between Pico's GPIO pins and relay input.
+- Relay modules can be powered using Pico's VBUS which supplies +5V directly from USB connector.
 - RP2's `machine.WDT` has a hardware ceiling of 8388ms; `config.py` uses 8000ms.
