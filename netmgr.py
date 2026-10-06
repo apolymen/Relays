@@ -53,6 +53,7 @@ async def connect_and_sync():
     global _last_sync_day
 
     wlan.active(True)
+    ## Using DHCP reservation instead of static IP due to known DNS issue
     # log("net", "Configuring Static IP profile...")
     # wlan.ifconfig(config.STATIC_IP_SETTINGS)
 
