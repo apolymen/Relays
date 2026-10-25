@@ -42,12 +42,15 @@ def _last_sunday(year, month):
 def _dst_active(utc):
     year, month, day, hour = utc[:4]
 
+    # Non DST months
     if month < 3 or month > 10:
         return False
 
+    # DST months
     if 3 < month < 10:
         return True
 
+    # March
     if month == 3:
         ls = _last_sunday(year, 3)
         if day > ls:
