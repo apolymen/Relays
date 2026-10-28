@@ -137,7 +137,7 @@ async def handle_client(reader, writer):
         await writer.drain()
 
     except Exception as e:
-        print("Web internal routing error:", e)
+        log("web", "Request handling error: " + str(e))
     finally:
         writer.close()
         await writer.wait_closed()
