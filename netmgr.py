@@ -17,7 +17,7 @@ from logger import log
 wlan = network.WLAN(network.STA_IF)
 
 _last_sync_day = 0
-_next_retry_ticks = 0
+_next_retry_ticks = None
 last_sync_ok = False
 
 
@@ -101,11 +101,12 @@ async def daily_resync_loop():
         now_ticks = time.ticks_ms()
 
         if current_day != _last_sync_day:
-            gc.collect()
-            log("net", "Free memory: " + str(gc.mem_free()) + " bytes.")
-            if time.ticks_diff(now_ticks, _next_retry_ticks) >= 0:
+            if _next_retry_ticks is None or time.ticks_diff(now_ticks, _next_retry_ticks) >= 0:
+                gc.collect()
+                log("net", "Free memory: " + str(gc.mem_free()) + " bytes.")
                 if ntp_sync():
                     _last_sync_day = athens_time.localtime()[2]
+                    _next_retry_ticks = None
                     log("net", "Daily Time Drift Sync Completed.")
                 else:
                     log("net", "Daily NTP sync failed. Postponing for 5 minutes.")
