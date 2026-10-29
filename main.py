@@ -118,6 +118,12 @@ async def handle_client(reader, writer):
             await writer.drain()
             return
 
+        if path == "/favicon.svg":
+            writer.write(b"HTTP/1.1 200 OK\r\nContent-Type: image/svg+xml\r\nCache-Control: max-age=86400\r\nConnection: close\r\n\r\n")
+            writer.write(_read_file("favicon.svg").encode("utf-8"))
+            await writer.drain()
+            return
+
         if path.startswith("/watering"):
             handled = await watering_service.handle(method, path, body_text, writer)
             if handled:
